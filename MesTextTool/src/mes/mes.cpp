@@ -1,5 +1,6 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
+#include <algorithm> 
 #include <mes.hpp>
 #include <file.hpp>
 #include <console.hpp>
@@ -79,10 +80,10 @@ namespace mes {
 	{
 		if (!raw.data() || raw.empty()) return;
 		
-		if (auto head = reinterpret_cast<int32_t*>(raw.data()); head[1] == 0x3) 
+		if (auto head{ reinterpret_cast<int32_t*>(raw.data()) }; head[1] == 0x03)
 		{
-			int32_t offset = static_cast<int32_t>(head[0] * 0x06 + 0x04);
-			if (auto size = static_cast<int32_t>(raw.size()); size > offset)
+			auto offset{ static_cast<int32_t>(head[0] * 0x06 + 0x04) };
+			if (auto size{ static_cast<int32_t>(raw.size()) }; size > offset)
 			{
 				if (size > offset + 0x03) 
 				{
@@ -102,12 +103,11 @@ namespace mes {
 					.offset = 0x08
 				};
 			}
-			this->m_IsNewMesVer = { true };
 		}
 		else 
 		{
-			int32_t offset = static_cast<int32_t>(head[0] * 0x04 + 0x04);
-			if (auto size = static_cast<int32_t>(raw.size()); size > offset) 
+			auto offset{ static_cast<int32_t>(head[0] * 0x04 + 0x04) };
+			if (auto size{ static_cast<int32_t>(raw.size()) }; size > offset)
 			{
 				if (size > offset + 0x02) 
 				{
@@ -127,7 +127,6 @@ namespace mes {
 					.offset = 0x04
 				};
 			}
-			this->m_IsNewMesVer = { false };
 		}
 		this->token_parse();
 	}
@@ -210,11 +209,6 @@ namespace mes {
 	auto script_view::version() const -> uint16_t 
 	{
 		return this->m_Version;
-	}
-
-	auto script_view::is_new_mes() const -> bool
-	{
-		return { this->m_IsNewMesVer };
 	}
 
 	script_helper::script_helper() {}
@@ -302,6 +296,12 @@ namespace mes {
 		return result;
 	}
 
+	auto script_helper::import_scene_text(const std::vector<std::pair<int32_t, std::string>>& texts, bool absolute_file_offset) -> bool 
+	{
+		auto&& _texts{ *reinterpret_cast<const std::vector<script_helper::text>*>(&texts) };
+		return this->import_scene_text(_texts, absolute_file_offset);
+	}
+
 	auto script_helper::import_scene_text(const std::vector<script_helper::text>& texts, bool absolute_file_offset) -> bool 
 	{
 		if (texts.empty())
@@ -314,34 +314,21 @@ namespace mes {
 			return { false };
 		}
 
-		const auto&& asmbin{ this->m_MesView.asmbin() };
-		const auto&& blocks{ this->m_MesView.blocks() };
-		const script_info* info{ this->m_MesView.info() };
-		const bool is_new_mes  { this->m_MesView.is_new_mes() };
-		int32_t bese{ absolute_file_offset ? asmbin.offset : 0 };
-
-		auto find_text = [&](int32_t offset) -> const script_helper::text*
-		{
-			for(const script_helper::text& text: texts)
-			{
-				auto pos = text.offset - bese;
-				if (pos == offset)
-				{
-					return { &text };
-				}
-			}
-			return { nullptr };
-		};
+		auto&& info  { this->m_MesView.info() };
+		auto&& asmbin{ this->m_MesView.asmbin() };
+		auto&& blocks{ this->m_MesView.blocks() };
 
 		utils::xmem::buffer<uint8_t> buffer{};
 		buffer.resize(this->m_Buffer.size());
 		buffer.recount(asmbin.offset);
 
-		auto block_count = int32_t{ 0 };
+		int32_t block_count{ 0 };
+		int32_t base{ absolute_file_offset ? asmbin.offset : 0 };
+
 		for (const auto& token : this->m_MesView.tokens())
 		{
 
-			if (!is_new_mes && block_count < blocks.size)
+			if (blocks.offset == 0x04 && block_count < blocks.size)
 			{
 				if (token.offset + 2 == blocks.data[block_count])
 				{
@@ -355,35 +342,32 @@ namespace mes {
 
 			if (info->encstr.its(token.value))
 			{
-				auto finish = [&](const script_helper::text* text) -> bool
+
+				auto&& it{ std::ranges::find(texts, token.offset + base, &text::offset) };
+
+				if (it != texts.end())
 				{
-					if (text == nullptr)
-					{
-						return false;
-					}
-					std::string str{ text->string };
+					std::string str{ it->string };
 					for (char& chr : str)
 					{
 						chr -= this->m_MesView.info()->deckey; // 加密字符串
 					}
 					buffer.write(token.value).write(str).write('\0');
-					return true;
-				}(find_text(token.offset));
-				
-				if (finish) { continue; }
+					continue;
+				}
 			}
 			
 			if (token.value != NULL && info->optunenc == token.value) 
 			{
-				auto&& text = find_text(token.offset);
-				if (text != nullptr)
+				auto&& it{ std::ranges::find(texts, token.offset + base, &text::offset) };
+				if (it != texts.end())
 				{
-					buffer.write(token.value).write(text->string).write('\0');
+					buffer.write(token.value).write(it->string).write('\0');
 					continue;
 				}
 			}
 
-			if (is_new_mes && (token.value == 0x03 || token.value == 0x04 ))
+			if (blocks.offset == 0x08 && (token.value == 0x03 || token.value == 0x04 ))
 			{
 				if (block_count < blocks.size)
 				{
@@ -406,15 +390,18 @@ namespace mes {
 		return true;
 	}
 
-	auto script_helper::get_view() -> const script_view& {
+	auto script_helper::get_view() -> const script_view& 
+	{
 		return this->m_MesView;
 	}
 
-	auto script_helper::is_parsed() -> bool {
+	auto script_helper::is_parsed() -> bool 
+	{
 		return static_cast<bool>(this->m_MesView.tokens().size());
 	}
 
-	auto script_helper::set_info(const script_info* info) -> script_helper& {
+	auto script_helper::set_info(const script_info* info) -> script_helper& 
+	{
 		this->m_Info = info;
 		return *this;
 	}
