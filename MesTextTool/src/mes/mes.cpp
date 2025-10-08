@@ -273,10 +273,11 @@ namespace mes {
 
 	auto script_helper::fetch_scene_text(bool absolute_file_offset) const -> std::vector<script_helper::text> 
 	{
+		const auto&& info  { this->m_MesView.info() };
+		const auto&& asmbin{ this->m_MesView.asmbin() };
+
 		std::vector<script_helper::text> result{};
-		const auto&& asmbin = this->m_MesView.asmbin();
-		const script_info* info = this->m_MesView.info();
-		int32_t bese = absolute_file_offset ? asmbin.offset : 0;
+		int32_t base{ absolute_file_offset ? asmbin.offset : 0 };
 
 		for (const script_view::token& token : this->m_MesView.tokens()) 
 		{
@@ -284,14 +285,13 @@ namespace mes {
 			{
 				std::string text{ reinterpret_cast<char*>(asmbin.data + token.offset + 1) };
 				for (char& ch : text) { ch += this->m_MesView.info()->deckey; } // 解密字符串
-				result.push_back({ .offset = token.offset + bese, .string = text });
+				result.push_back({ .offset = token.offset + base, .string = text });
 			}
 			else if (token.value != NULL && info->optunenc == token.value)
 			{
 				std::string text{ reinterpret_cast<char*>(asmbin.data + token.offset + 1) };
-				result.push_back({ .offset = token.offset + bese, .string = text });
+				result.push_back({ .offset = token.offset + base, .string = text });
 			}
-			
 		}
 		return result;
 	}
@@ -342,7 +342,7 @@ namespace mes {
 
 			if (info->encstr.its(token.value))
 			{
-
+				
 				auto&& it{ std::ranges::find(texts, token.offset + base, &text::offset) };
 
 				if (it != texts.end())
