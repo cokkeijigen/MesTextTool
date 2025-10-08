@@ -314,8 +314,8 @@ namespace mes {
 			return { false };
 		}
 
-		auto&& info  { this->m_MesView.info() };
-		auto&& asmbin{ this->m_MesView.asmbin() };
+		const auto&& info  { this->m_MesView.info() };
+		const auto&& asmbin{ this->m_MesView.asmbin() };
 		auto&& blocks{ this->m_MesView.blocks() };
 
 		utils::xmem::buffer<uint8_t> buffer{};
