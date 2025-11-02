@@ -296,6 +296,8 @@ namespace console
 		uint32_t cdpg{ cdpg::default_cp };
 		attrs_t attrs{ attrs_t::unset };
 		std::unique_ptr<char> buffer{ new char[buffer_size] };
+
+		auto write(std::string_view str) const noexcept -> void;
 	public:
 		
 		inline console_streambuf(const console_helper& helper) noexcept : helper{ helper }
