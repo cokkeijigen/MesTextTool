@@ -8,7 +8,7 @@
 #include <file.hpp>
 #include <main.hpp>
 
-static auto run(int argc, char** args) -> void
+static auto run(int argc, const char** args) -> void
 {
 	try {
 
@@ -104,7 +104,7 @@ static auto run(int argc, char** args) -> void
 }
 
 
-auto main(int argc, char** args) -> int 
+auto main(const int argc, const char** args) -> int 
 {
 	
 	console::make(_tool_name_, false);
