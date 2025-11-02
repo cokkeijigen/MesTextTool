@@ -311,9 +311,7 @@ namespace console
 		const auto count{ static_cast<size_t>(this->pptr() - this->pbase()) };
 		if (count > 0) 
 		{
-			this->helper.set_cp(this->cdpg).set_attrs(this->attrs);
-			this->helper.write(std::string_view{ this->pbase(), count });
-			this->helper.reset_cp().reset_attrs();
+			this->write(std::string_view{ this->pbase(), count });
 			this->setp(this->pbase(), this->epptr());
 		}
 		return 0;
@@ -379,6 +377,16 @@ namespace console
 		}
 
 		return n;
+	}
+
+	auto console_streambuf::write(std::string_view str) const noexcept -> void
+	{
+		if (!str.empty())
+		{
+			this->helper.set_cp(this->cdpg).set_attrs(this->attrs);
+			this->helper.write(str);
+			this->helper.reset_cp().reset_attrs();
+		}
 	}
 	
 }
