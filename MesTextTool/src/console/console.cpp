@@ -1,177 +1,384 @@
 #include <iostream>
-#include <windows.h>
 #include <string>
 #include "console.hpp"
 
-namespace console {
+#ifdef min
+#undef min
+#endif
 
-	struct console_maker {
-		console_maker(const char*    name, bool showPID) { console::init(name, showPID); }
-		console_maker(const wchar_t* name, bool showPID) { console::init(name, showPID); }
-		~console_maker() { console::destroy(); }
-	};
-	struct console_buffer { void* data; size_t size; };
+namespace console
+{
+	const attrs attrs::unset = { 0xFFFF };
 
-	static auto temp_va_list  = va_list{ nullptr };
-	static auto console_hwnd  = HWND   { nullptr };
-	static auto output_handle = HANDLE { nullptr };
-	static auto input_handle  = HANDLE { nullptr };
-	static auto buffer = console_buffer{ nullptr, 0 };
-	static auto c_tmep = std::unique_ptr<console_maker>{ nullptr };
-
-	static std::string make_title_text() {
-		if (char title[0xFF]{}; ::GetModuleFileNameA(NULL, title, sizeof(title))) {
-			std::string_view module_name{ title };
-			if (auto beg = module_name.rfind('\\'); beg != std::string::npos) {
-				module_name = std::string_view{ title + beg + 1 };
-				if (auto end = module_name.rfind('.'); end != std::string::npos) {
-					title[end] = '\0';
-				}
-			}
-			return std::string{ "Console for " }.append(module_name);
+	console_helper::~console_helper() noexcept
+	{
+		if (this->m_Window != nullptr)
+		{
+			static_cast<void>(::DestroyWindow(this->m_Window));
 		}
-		return std::string{ "Console for Windows" };
+
+		this->m_Input  = nullptr;
+		this->m_Output = nullptr;
+		this->m_Window = nullptr;
+
+		static_cast<void>(::FreeConsole());
 	}
 
-	static void clear_console(CONSOLE_SCREEN_BUFFER_INFO csbi = {}, DWORD cellsWritten = {}) {
-		static_cast<void>(::GetConsoleScreenBufferInfo(console::output_handle, &csbi));
-		static_cast<void>(::SetConsoleCursorPosition(console::output_handle, { NULL }));
-		static_cast<void>(::FillConsoleOutputCharacterA(console::output_handle, ' ', 
-			csbi.dwSize.X * csbi.dwSize.Y, { NULL }, &cellsWritten));
-		static_cast<void>(::FillConsoleOutputAttribute(console::output_handle, csbi.wAttributes, 
-			csbi.dwSize.X * csbi.dwSize.Y, { NULL }, &cellsWritten));
+	console_helper::console_helper() noexcept 
+	{
+		::AllocConsole();
+		this->m_Output = ::GetStdHandle(STD_OUTPUT_HANDLE);
+		this->m_Input  = ::GetStdHandle(STD_INPUT_HANDLE);
+		this->m_Window = ::GetConsoleWindow();
 	}
 
-	static bool init_console() {
-		static_cast<void>(::AllocConsole());
-		console::output_handle = ::GetStdHandle(STD_OUTPUT_HANDLE);
-		console::input_handle = ::GetStdHandle(STD_INPUT_HANDLE);
-		console::console_hwnd = ::GetConsoleWindow();
-		static_cast<void>(::ShowWindow(console::console_hwnd, SW_SHOW));
-		return console::output_handle && console::input_handle && console::console_hwnd;
+	console::console_helper::console_helper(cdpg_t cdpg) noexcept : console_helper()
+	{
+		this->_cdpg = cdpg;
+		this->set_cp(cdpg);
 	}
 
-	static void await_anykey_to_continue(INPUT_RECORD inputRecord = {}, DWORD numRead = NULL) {
+	console_helper::console_helper(const std::wstring_view title, cdpg_t cdpg) noexcept : console_helper(cdpg)
+	{
+		if (!title.empty())
+		{
+			static_cast<void>(::SetConsoleTitleW(title.data()));
+		}
+	}
+
+	console_helper::console_helper(const std::string_view title, cdpg_t cdpg) noexcept : console_helper(cdpg)
+	{
+		if (!title.empty())
+		{
+			static_cast<void>(::SetConsoleTitleA(title.data()));
+		}
+	}
+
+	auto console_helper::show() const noexcept -> void
+	{
+		if (this->m_Window != nullptr)
+		{
+			::ShowWindow(this->m_Window, SW_SHOW);
+		}
+	}
+
+	auto console_helper::hide() const noexcept -> void
+	{
+		if (this->m_Window != nullptr)
+		{
+			::ShowWindow(this->m_Window, SW_HIDE);
+		}
+	}
+
+	auto console_helper::set_attrs(attrs_t attrs) const noexcept -> const console_helper&
+	{
+		if (attrs != attrs::unset)
+		{
+			::SetConsoleTextAttribute(this->m_Output, attrs.value);
+		}
+
+		return { *this };
+	}
+
+	auto console_helper::reset_attrs() const noexcept -> const console_helper&
+	{
+		this->set_attrs(attrs::color::text_default);
+		return { *this };
+	}
+
+	auto console_helper::set_cp(uint32_t cdpg) const noexcept -> const console_helper&
+	{
+		::SetConsoleOutputCP(cdpg);
+		return { *this };
+	}
+
+	auto console_helper::reset_cp() const noexcept -> const console_helper&
+	{
+		::SetConsoleOutputCP(this->_cdpg);
+		return { *this };
+	}
+
+	auto console_helper::clear() const noexcept -> const console_helper&
+	{
+		DWORD cellsWritten{};
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		::GetConsoleScreenBufferInfo(this->m_Output, &csbi);
+		::SetConsoleCursorPosition(this->m_Output, { NULL });
+		::FillConsoleOutputCharacterA(this->m_Output, ' ',
+			csbi.dwSize.X * csbi.dwSize.Y, { NULL }, &cellsWritten);
+		::FillConsoleOutputAttribute(this->m_Output, csbi.wAttributes,
+			csbi.dwSize.X * csbi.dwSize.Y, { NULL }, &cellsWritten);
+		return { *this };
+	}
+
+	auto console_helper::read_anykey() const noexcept -> const console_helper&
+	{
+		INPUT_RECORD inputRecord{};
+		DWORD numRead{};
 		do {
-			if (!ReadConsoleInputW(console::input_handle, &inputRecord, 1, &numRead)) return;
+			if (!ReadConsoleInputW(this->m_Input, &inputRecord, 1, &numRead)) break;
 		} while (inputRecord.EventType != KEY_EVENT || !inputRecord.Event.KeyEvent.bKeyDown);
+		return { *this };
 	}
 
-	static void destroy_console() {
-		if (console::console_hwnd) {
-			static_cast<void>(::DestroyWindow(console::console_hwnd));
+	auto console_helper::write(std::wstring_view content) const noexcept -> const console_helper&
+	{
+
+		if (this->m_Output != nullptr && !content.empty())
+		{
+			::WriteConsoleW(this->m_Output, content.data(), content.size(), NULL, NULL);
 		}
-		if (console::output_handle) {
-			static_cast<void>(::FreeConsole());
-		}
-		if (console::buffer.data) {
-			delete[] console::buffer.data;
-		}
-		console::console_hwnd   = { NULL };
-		console::output_handle = { NULL };
-		console::buffer = { NULL, NULL };
+		return { *this };
 	}
 
-	static void write_console_ex(const char* fmt, uint32_t n_cdpg, int attrs, uint32_t o_cdpg = ::GetConsoleCP()) {
-		if (!console::output_handle || !console::temp_va_list) return;
-		if (DWORD size = DWORD(std::vsnprintf(nullptr, 0, fmt, console::temp_va_list)); size > 0) {
-			if (console::buffer.data == nullptr || console::buffer.size <= size) {
-				if (console::buffer.data) delete[] console::buffer.data;
-				console::buffer = { new char[size + 1], size + 1 };
-			}
-			auto&& buffer = reinterpret_cast<char*>(console::buffer.data);
-			static_cast<void>(std::vsnprintf(buffer, console::buffer.size, fmt, console::temp_va_list));
-			static_cast<void>(::SetConsoleTextAttribute(console::output_handle, attrs));
-			static_cast<void>(::SetConsoleOutputCP(n_cdpg));
-			static_cast<void>(::WriteConsoleA(console::output_handle, buffer, size, NULL, NULL));
-			static_cast<void>(::SetConsoleTextAttribute(console::output_handle, txt::dDfault));
-			static_cast<void>(::SetConsoleOutputCP(o_cdpg));
+	auto console_helper::write(std::string_view content) const noexcept -> const console_helper&
+	{
+
+		if (this->m_Output != nullptr && !content.empty())
+		{
+			::WriteConsoleA(this->m_Output, content.data(), content.size(), NULL, NULL);
 		}
+		return { *this };
 	}
 
-	static void write_console_ex(const wchar_t* fmt, int attrs) {
-		if (!console::output_handle || !console::temp_va_list) return;
-		if (size_t size = std::vswprintf(nullptr, 0, fmt, console::temp_va_list); size > 0) {
-			if (console::buffer.data == nullptr || (console::buffer.size / 2) <= size) {
-				if (console::buffer.data) delete[] console::buffer.data;
-				console::buffer = { new wchar_t[size + 1], ((size + 1) * 2) };
-			}
-			auto&& buffer = reinterpret_cast<wchar_t*>(console::buffer.data);
-			static_cast<void>(std::vswprintf(buffer, console::buffer.size, fmt, console::temp_va_list));
-			static_cast<void>(::SetConsoleTextAttribute(console::output_handle, attrs));
-			static_cast<void>(::WriteConsoleW(console::output_handle, buffer, size, NULL, NULL));
-			static_cast<void>(::SetConsoleTextAttribute(console::output_handle, txt::dDfault));
-		}
+	auto console_helper::write(uint32_t cdpg, std::string_view content) const noexcept -> const console_helper&
+	{
+		this->set_cp(cdpg).write(content).reset_cp();
+		return { *this };
 	}
 
-	bool console::make(const char* name, bool showPID) {
-		if (console::c_tmep.get() == nullptr) {
-			console::c_tmep = std::make_unique<console_maker>(name, showPID);
-		}
-		return console::c_tmep.get() != nullptr;
+	auto console_helper::write(std::u8string_view content) const noexcept -> const console_helper&
+	{
+		std::string_view u8string{ reinterpret_cast<const char*>(content.data()), content.size() };
+		this->set_cp(cdpg::utf_8).write(u8string).reset_cp();
+		return { *this };
 	}
 
-	bool console::make(const wchar_t* name, bool showPID) {
-		if (console::c_tmep.get() == nullptr) {
-			console::c_tmep = std::make_unique<console_maker>(name, showPID);
-		}
-		return console::c_tmep.get() != nullptr;
+	auto console_helper::write(std::u16string_view content) const noexcept -> const console_helper&
+	{
+		std::wstring_view u16string{ reinterpret_cast<const wchar_t*>(content.data()), content.size() };
+		return this->write(u16string);
 	}
 
-	void console::init(const char* name, bool showPID) {
-		if (!console::init_console()) return;
-		auto&& text = name ? name : make_title_text();
-		if (showPID) {
-			static_cast<void>(::SetConsoleTitleA(text.insert(0, "[PID: ] ")
-				.insert(6, std::to_string(GetCurrentProcessId())).c_str()
-			));
+	auto console_helper::write(const char* fmt, va_list arg_list) const noexcept -> const console_helper&
+	{
+		if (this->m_Output == nullptr)
+		{
+			return { *this };
 		}
-		else {
-			static_cast<void>(::SetConsoleTitleA(text.c_str()));
+
+		auto size{ std::vsnprintf(nullptr, 0, fmt, arg_list) };
+		if (size > 0)
+		{
+			auto buffer{ std::string(size + 1, 0) };
+			std::vsnprintf(buffer.data(), buffer.size(), fmt, arg_list);
+			this->write(buffer);
 		}
-		console::clear_console();
+		return { *this };
 	}
 
-	void console::init(const wchar_t* name, bool showPID) {
-		if (nullptr == name) {
-			console::init(static_cast<const char*>(nullptr), showPID);
+	auto console_helper::write(const wchar_t* fmt, va_list arg_list) const noexcept -> const console_helper&
+	{
+		if (this->m_Output == nullptr)
+		{
+			return { *this };
 		}
-		else if(console::init_console() && showPID){
-			static_cast<void>(::SetConsoleTitleW(std::wstring(L"[PID: ] ")
-				.insert(6, std::to_wstring(GetCurrentProcessId()))
-				.append(name).c_str()
-			));
+
+		auto size{ std::vswprintf(nullptr, 0, fmt, arg_list) };
+		if (size > 0)
+		{
+			auto buffer{ std::wstring(size + 1, 0) };
+			std::vswprintf(buffer.data(), buffer.size(), fmt, arg_list);
+			this->write(buffer);
 		}
-		else if(console::console_hwnd) {
-			static_cast<void>(::SetConsoleTitleW(name));
-		}
-		console::clear_console();
+		return { *this };
 	}
 
-	void console::fmt::write_ex(const char* fmt, int cdpg, int attrs, ...) {
-		__crt_va_start(console::temp_va_list, attrs);
-		console::write_console_ex(fmt, cdpg, attrs);
-		__crt_va_end(console::temp_va_list);
+	auto console_helper::write(const char8_t* fmt, va_list arg_list) const noexcept -> const console_helper&
+	{
+		return { this->set_cp(cdpg::utf_8).write(reinterpret_cast<const char*>(fmt), arg_list).reset_cp() };
 	}
 
-	void console::fmt::write_ex(const wchar_t* fmt, int attrs, ...) {
-		__crt_va_start(console::temp_va_list, attrs);
-		console::write_console_ex(fmt, attrs);
-		__crt_va_end(console::temp_va_list);
+	auto console_helper::write(const char16_t* fmt, va_list arg_list) const noexcept -> const console_helper&
+	{
+		return { this->write(reinterpret_cast<const wchar_t*>(fmt), arg_list) };
 	}
 
-	void console::pause(const char* message, int attrs) { 
-		if (message) console::write(message, attrs);
-		console::await_anykey_to_continue();
+	auto console_helper::writeline(std::wstring_view content) const noexcept -> const console_helper&
+	{
+		return this->write(content).write("\n");
 	}
+
+	auto console_helper::writeline(std::string_view content) const noexcept -> const console_helper&
+	{
+		return this->write(content).write("\n");
+	}
+
+	auto console_helper::writeline(uint32_t cdpg, std::string_view content) const noexcept -> const console_helper&
+	{
+		return this->set_cp(cdpg).write(content).write("\n").reset_cp();
+	}
+
+	auto console_helper::writeline(std::u16string_view content) const noexcept -> const console_helper&
+	{
+		return this->write(content).write("\n");
+	}
+
+	auto console_helper::writeline(std::u8string_view content) const noexcept -> const console_helper&
+	{
+		return this->write(content).write("\n");
+	}
+
+	auto console_helper::writer(uint32_t cdpg, attrs_t attrs) const noexcept -> console_writer
+	{
+		return console_writer{ *this, cdpg, attrs };
+	}
+
+	auto console::console_helper::ostream() const noexcept -> console_ostream
+	{
+		return console_ostream{ *this };
+	}
+
+	auto console_helper::ostream(cdpg_t cdpg) const noexcept -> console_ostream
+	{
+		return console_ostream{ *this, cdpg, attrs_t::unset };
+	}
+
+	auto console_helper::ostream(attrs_t&& attrs) const noexcept -> console_ostream
+	{
+		return console_ostream{ *this, cdpg::default_cp, attrs };
+	}
+
+	auto console::console_helper::ostream(const attrs_t& attrs) const noexcept -> console_ostream
+	{
+		return console_ostream{ *this, cdpg::default_cp, attrs };
+	}
+
+	auto console::console_helper::ostream(attrs_t::color attrs) const noexcept -> console_ostream
+	{
+		return console_ostream{ *this, cdpg::default_cp, attrs };
+	}
+
+	auto console::console_helper::ostream(attrs_t::other attrs) const noexcept -> console_ostream
+	{
+		return console_ostream{ *this, cdpg::default_cp, attrs };
+	}
+
+	auto console::console_helper::ostream(uint32_t cdpg, attrs_t::other attrs) const noexcept -> console_ostream
+	{
+		return console_ostream{ *this, cdpg, attrs };
+	}
+
+	auto console::console_helper::ostream(uint32_t cdpg, attrs_t::color attrs) const noexcept -> console_ostream
+	{
+		return console_ostream{ *this, cdpg, attrs };
+	}
+
+	auto console_helper::ostream(uint32_t cdpg, attrs_t attrs) const noexcept -> console_ostream
+	{
+		return console_ostream{ *this, cdpg, attrs };
+	}
+
+	auto console_writer::write(std::string_view content) const noexcept -> const console_writer&
+	{
+		this->helper.set_cp(this->_cdpg).set_attrs(this->_attrs).write(content).reset_attrs().reset_cp();
+		return { *this };
+	}
+
+	auto console_writer::write(const char* fmt, ...) const noexcept -> const console_writer&
+	{
+		va_list arg_list{};
+		va_start(arg_list, fmt);
+		this->helper
+			.set_cp(this->_cdpg)
+			.set_attrs(this->_attrs)
+			.write(fmt, arg_list)
+			.reset_attrs()
+			.reset_cp();
+		va_end(arg_list);
 		
-	void console::pause(const wchar_t* message, int attrs) { 
-		if (message) console::write(message, attrs);
-		console::await_anykey_to_continue();
+		return { *this };
 	}
 
-	void console::clear()   { console::clear_console(); }
+	auto console_writer::writeline(std::string_view content) const noexcept -> const console_writer&
+	{
+		this->helper.set_cp(this->_cdpg).set_attrs(this->_attrs).writeline(content).reset_attrs().reset_cp();
+		return { *this };
+	}
 
-	void console::destroy() { console::destroy_console(); }
+	std::streambuf::int_type console_streambuf::sync()
+	{
+		const auto count{ static_cast<size_t>(this->pptr() - this->pbase()) };
+		if (count > 0) 
+		{
+			this->helper.set_cp(this->cdpg).set_attrs(this->attrs);
+			this->helper.write(std::string_view{ this->pbase(), count });
+			this->helper.reset_cp().reset_attrs();
+			this->setp(this->pbase(), this->epptr());
+		}
+		return 0;
+	}
 
+	std::streambuf::int_type console_streambuf::overflow(int_type c)
+	{
+		if (!this->auto_sync)
+		{
+			std::streamsize remaining_space{ this->epptr() - this->pptr() };
+			if (remaining_space == 1)
+			{
+				this->sync();
+			}
+		}
+		
+		if (c != traits_type::eof())
+		{
+			*this->pptr() = traits_type::to_char_type(c);
+			this->pbump(1);
+		}
+
+		if (this->auto_sync)
+		{
+			this->sync();
+		}
+
+		return traits_type::not_eof(c);
+	}
+
+	std::streamsize console_streambuf::xsputn(const char_type* s, std::streamsize n)
+	{
+		if (s == nullptr || n == 0)
+		{
+			return n;
+		}
+
+		if (n >= console_streambuf::buffer_size)
+		{
+			
+			this->sync();
+			this->helper.write(std::string_view
+				{ 
+					reinterpret_cast<const char*>(s),
+					static_cast<size_t>(n)
+				}
+			);
+			return n;
+		}
+		
+		std::streamsize remaining_space{ this->epptr() - this->pptr() };
+		if (remaining_space <= n)
+		{
+			this->sync();
+		}
+
+		std::memcpy(this->pptr(), s, n);
+		this->pbump(static_cast<int>(n));
+
+		if (this->auto_sync)
+		{
+			this->sync();
+		}
+
+		return n;
+	}
+	
 }
