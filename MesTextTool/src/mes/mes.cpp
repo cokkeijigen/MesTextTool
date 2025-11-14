@@ -135,14 +135,15 @@ namespace mes {
 				};
 			}
 		}
+
 		this->token_parse();
 	}
 
 	auto script_view::token_parse() -> void 
 	{
-		if (nullptr == this->m_Info) return;
-		
 		this->m_Tokens.clear();
+		if (nullptr == this->m_Info) { return; }
+		
 		for (int32_t offset{ 0 }; offset < this->m_Asmbin.size; )
 		{
 			script_view::token token 
@@ -247,21 +248,21 @@ namespace mes {
 		}
 
 		file.seek(0, SEEK_END);
-		auto length = static_cast<int32_t>(file.tell());
+		const auto length{ static_cast<int32_t>(file.tell()) };
 		if (length == errno) 
 		{
 			return *this;
 		}
 
-		int32_t n_size = length * 2;
-		int32_t o_size = static_cast<int32_t>(this->m_Buffer.size());
+		const int32_t n_size{ length * 2 };
+		const int32_t o_size{ static_cast<int32_t>(this->m_Buffer.size()) };
 		if (n_size > o_size) 
 		{
 			this->m_Buffer.clear();
 			this->m_Buffer.resize(n_size);
 		}
 
-		size_t count = file.rewind().read(this->m_Buffer.data(), 1, length);
+		const size_t count{ file.rewind().read(this->m_Buffer.data(), 1, length) };
 		if (count == length)
 		{
 			this->m_MesView = script_view
