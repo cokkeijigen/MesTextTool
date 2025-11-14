@@ -84,10 +84,12 @@ namespace mes {
 	{
 		if (!raw.data() || raw.empty()) return;
 		
-		if (auto head{ reinterpret_cast<int32_t*>(raw.data()) }; head[1] == 0x03)
+		const auto head{ reinterpret_cast<int32_t*>(raw.data()) };
+		if (head[1] == 0x03)
 		{
-			auto offset{ static_cast<int32_t>(head[0] * 0x06 + 0x04) };
-			if (auto size{ static_cast<int32_t>(raw.size()) }; size > offset)
+			const auto size{ static_cast<int32_t>(raw.size()) };
+			const auto offset{ static_cast<int32_t>(head[0] * 0x06 + 0x04) };
+			if (size > offset)
 			{
 				if (size > offset + 0x03) 
 				{
@@ -110,8 +112,9 @@ namespace mes {
 		}
 		else 
 		{
-			auto offset{ static_cast<int32_t>(head[0] * 0x04 + 0x04) };
-			if (auto size{ static_cast<int32_t>(raw.size()) }; size > offset)
+			const auto size{ static_cast<int32_t>(raw.size()) };
+			const auto offset{ static_cast<int32_t>(head[0] * 0x04 + 0x04) };
+			if (size > offset)
 			{
 				if (size > offset + 0x02) 
 				{
