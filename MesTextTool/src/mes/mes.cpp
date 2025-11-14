@@ -281,7 +281,7 @@ namespace mes {
 		const auto&& asmbin{ this->m_MesView.asmbin() };
 
 		std::vector<script_helper::text> result{};
-		int32_t base{ absolute_file_offset ? asmbin.offset : 0 };
+		const int32_t base{ absolute_file_offset ? asmbin.offset : 0 };
 		for (const script_view::token& token : this->m_MesView.tokens()) 
 		{
 			if (info->encstr.its(token.value)) 
@@ -326,7 +326,7 @@ namespace mes {
 		buffer.recount(asmbin.offset);
 
 		int32_t block_count{ 0 };
-		int32_t base{ absolute_file_offset ? asmbin.offset : 0 };
+		const int32_t base{ absolute_file_offset ? asmbin.offset : 0 };
 
 		for (const auto& token : this->m_MesView.tokens())
 		{
