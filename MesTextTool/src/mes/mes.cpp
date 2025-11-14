@@ -47,14 +47,17 @@ namespace mes {
 
 	inline auto script_info::section::its(uint8_t key) const -> bool
 	{
-		return ((!(beg == end && beg == 0xFF)) && (key >= beg && key <= end));
+		return !(beg == end && beg == 0xFF) && (key >= beg && key <= end);
 	}
 
 	auto script_info::query(std::string_view name) -> const script_info* 
 	{
-		if(!name.empty()) for (const auto& info : script_info::infos)
+		if (!name.empty()) 
 		{
-			if (name == info.name) return &info;
+			for (const auto& info : script_info::infos)
+			{
+				if (name == info.name) return &info;
+			}
 		}
 		return nullptr;
 	}
@@ -279,7 +282,6 @@ namespace mes {
 
 		std::vector<script_helper::text> result{};
 		int32_t base{ absolute_file_offset ? asmbin.offset : 0 };
-
 		for (const script_view::token& token : this->m_MesView.tokens()) 
 		{
 			if (info->encstr.its(token.value)) 
