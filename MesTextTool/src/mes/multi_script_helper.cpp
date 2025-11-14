@@ -153,25 +153,15 @@ namespace mes
 		return { chars.find(chr) != std::wstring_view::npos };
 	}
 
-	auto mes::multi_script_helper::text_formater::is_talking(wchar_t beg, wchar_t end) -> bool
+	auto mes::multi_script_helper::text_formater::is_talking(std::wstring_view str) -> bool
 	{
-
-		if (beg == L'「' && end == L'」')
+		const auto beg{ str.begin() }, end{ str.end() - 1 };
+		return bool
 		{
-			return { true };
-		}
-
-		if (beg == L'『' && end == L'』') 
-		{
-			return { true };
-		}
-
-		if (beg == L'“' && end == L'“')
-		{
-			return { true };
-		}
-
-		return { false };
+			(*beg == L'「' && *end == L'」') || 
+			(*beg == L'『' && *end == L'』') ||
+			(*beg == L'“' && *end == L'”')
+		};
 	}
 
 	auto multi_script_helper::text_formater::is_half_width(wchar_t wchar) -> bool
@@ -206,17 +196,15 @@ namespace mes
 				this->m_config.tmax >= this->m_config.tmin
 			};
 		}
+
 	    if (need_enable_format)
 		{
 			buffer.remove(L"\\n　").remove(L"\\n");
 
-			auto wtext{ buffer.view() };
-			auto first{ wtext.begin() };
-			auto last { wtext.end() - 1 };
-			bool is_talking{ this->is_talking(*first, *last) };
+			const auto wtext{ buffer.view() };
+			const bool is_talking{ this->is_talking(wtext) };
 
-			size_t length = wtext.size();
-
+			const size_t length{ wtext.size() };
 			if (length > static_cast<size_t>(this->m_config.tmin))
 			{
 
@@ -238,7 +226,7 @@ namespace mes
 
 					if (wchar == L'｛')
 					{
-						auto finish = [&]() -> bool
+						const auto complete = [&]() -> bool
 						{
 							size_t spt = wtext.find(L'／', index);
 							if (std::wstring::npos == spt)
@@ -276,9 +264,9 @@ namespace mes
 
 							index = end + 1;
 							return true;
-						}();
+						};
 
-						if (finish) { continue; };
+						if (complete()) { continue; };
 					}
 
 					if (this->is_half_width(wchar))
@@ -297,9 +285,8 @@ namespace mes
 								break;
 							}
 							auto&& first{ wtext.begin() + index };
-							auto&& last{ first + count };
+							auto&& last { first + count };
 							std::wstring_view text{ first,  last };
-
 
 							size_t find = text.find(L'@');
 							if (find == std::wstring_view::npos)
@@ -343,11 +330,13 @@ namespace mes
 				buffer = std::move(n_text);
 			}
 		}
+		
 		for (const auto& [key, value] : this->m_config.atrp)
 		{
 			buffer.replace(key, value);
 		}
-		text = buffer.string(this->m_config.cdpg);
+
+		text = std::move(buffer.string(this->m_config.cdpg));
 	}
 
 	auto multi_script_helper::read_text(std::string_view path, std::vector<script_helper::text>& result) -> bool {
@@ -363,7 +352,7 @@ namespace mes
 
 		file.rewind();
 		result.clear();
-		utils::string::buffer buffer(1024);
+		utils::string::buffer buffer{ 1024 };
 
 		int32_t offset{ -1 };
 		while (file.gets(buffer.data(), buffer.size()) != nullptr)
