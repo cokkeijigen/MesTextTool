@@ -161,9 +161,8 @@ namespace mes {
 			const config& m_config;
 			static auto is_first_char_forbidden(wchar_t chr) -> bool;
 			static auto is_last_char_forbidden (wchar_t chr) -> bool;
-			static auto is_talking(wchar_t beg, wchar_t end) -> bool;
+			static auto is_talking(std::wstring_view str) -> bool;
 			static auto is_half_width(wchar_t wchar) -> bool;
-
 		public:
 			text_formater(const config& config);
 			auto format(std::string& text) -> void;
