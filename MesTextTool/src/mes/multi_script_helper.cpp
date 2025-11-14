@@ -8,7 +8,8 @@
 #include <string_buffer.hpp>
 #include <console.hpp>
 
-namespace mes {
+namespace mes 
+{
 
 	auto multi_script_helper::config::read(std::string_view path) -> config 
 	{
@@ -50,34 +51,34 @@ namespace mes {
 				continue;
 			}
 
-			if (buffer.contrast(config::path, 0, sizeof(config::path) - 1)) 
+			if (buffer.contrast(config::k_path, 0, sizeof(config::k_path) - 1))
 			{
 				flag = 1;
 			}
-			else if (buffer.contrast(config::cdpg, 0, sizeof(config::cdpg) - 1))
+			else if (buffer.contrast(config::k_cdpg, 0, sizeof(config::k_cdpg) - 1))
 			{
 				flag = 2;
 			}
-			else if (buffer.contrast(config::tmin, 0, sizeof(config::tmin) - 1)) 
+			else if (buffer.contrast(config::k_tmin, 0, sizeof(config::k_tmin) - 1))
 			{
 				flag = 3;
 			}
-			else if (buffer.contrast(config::tmax, 0, sizeof(config::tmax) - 1))
+			else if (buffer.contrast(config::k_tmax, 0, sizeof(config::k_tmax) - 1))
 			{
 				flag = 4;
 			}
-			else if (buffer.contrast(config::bfrp, 0, sizeof(config::bfrp) - 1)) 
+			else if (buffer.contrast(config::k_bfrp, 0, sizeof(config::k_bfrp) - 1))
 			{
 				flag = 5;
 			}
-			else if (buffer.contrast(config::atrp, 0, sizeof(config::atrp) - 1)) 
+			else if (buffer.contrast(config::k_atrp, 0, sizeof(config::k_atrp) - 1))
 			{
 				flag = 6;
 			}
 			else if (flag == 1) 
 			{
-				result.InputPath.assign(buffer.data());
-				if (!result.InputPath.empty()) 
+				result.path.assign(buffer.data());
+				if (!result.path.empty())
 				{
 					flag = 0;
 				}
@@ -90,15 +91,15 @@ namespace mes {
 				{
 					if (flag == 2) 
 					{
-						result.UseCodePage = value;
+						result.cdpg = value;
 					}
 					else if (flag == 3) 
 					{
-						result.MinLength = value;
+						result.tmin = value;
 					}
 					else
 					{
-						result.MaxLength = value;
+						result.tmax = value;
 					}
 					flag = 0;
 				}
@@ -126,17 +127,17 @@ namespace mes {
 				);
 				if (flag == 5)
 				{
-					result.Before.push_back(pair);
+					result.bfrp.push_back(pair);
 				}
 				else 
 				{
-					result.After.push_back(pair);
+					result.atrp.push_back(pair);
 				}
 			}
 		}
 	}
 
-	multi_script_helper::text_formater::text_formater(const config& config) : m_Config(config)
+	multi_script_helper::text_formater::text_formater(const config& config) : m_config(config)
 	{
 	}
 
@@ -182,7 +183,8 @@ namespace mes {
 	{
 		utils::wstring::buffer buffer{ utils::to_u16str(text, CP_UTF8) };
 
-		for (const auto& [key, value] : this->m_Config.Before) {
+		for (const auto& [key, value] : this->m_config.bfrp) 
+		{
 			buffer.replace(key, value);
 		}
 
@@ -200,8 +202,8 @@ namespace mes {
 		{
 			need_enable_format = bool
 			{
-				(this->m_Config.MaxLength != -1 || this->m_Config.MinLength != -1) &&
-				this->m_Config.MaxLength >= this->m_Config.MinLength
+				(this->m_config.tmax != -1 || this->m_config.tmin != -1) &&
+				this->m_config.tmax >= this->m_config.tmin
 			};
 		}
 	    if (need_enable_format)
@@ -215,7 +217,7 @@ namespace mes {
 
 			size_t length = wtext.size();
 
-			if (length > static_cast<size_t>(this->m_Config.MinLength))
+			if (length > static_cast<size_t>(this->m_config.tmin))
 			{
 
 				float char_count = 0.0f;
@@ -225,7 +227,7 @@ namespace mes {
 				{
 					const wchar_t& wchar = wtext[index];
 
-					if (char_count >= static_cast<float>(this->m_Config.MinLength))
+					if (char_count >= static_cast<float>(this->m_config.tmin))
 					{
 						if (!this->is_first_char_forbidden(wchar))
 						{
@@ -260,7 +262,7 @@ namespace mes {
 								}
 
 								char_count = char_count + length;
-								if (char_count >= this->m_Config.MaxLength)
+								if (char_count >= this->m_config.tmax)
 								{
 									n_text.write(is_talking ? L"\n　" : L"\n");
 									char_count = length;
@@ -304,7 +306,7 @@ namespace mes {
 							{
 								auto length = static_cast<float>(count) / 2.0f;
 								char_count = char_count + length;
-								if (char_count >= this->m_Config.MaxLength)
+								if (char_count >= this->m_config.tmax)
 								{
 									n_text.write(is_talking ? L"\n　" : L"\n");
 									char_count = length;
@@ -325,7 +327,7 @@ namespace mes {
 						char_count += 1.0f;
 					}
 
-					if (char_count >= static_cast<float>(this->m_Config.MinLength))
+					if (char_count >= static_cast<float>(this->m_config.tmin))
 					{
 						if (this->is_last_char_forbidden(wchar))
 						{
@@ -341,11 +343,11 @@ namespace mes {
 				buffer = std::move(n_text);
 			}
 		}
-		for (const auto& [key, value] : this->m_Config.After) 
+		for (const auto& [key, value] : this->m_config.atrp)
 		{
 			buffer.replace(key, value);
 		}
-		text = buffer.string(this->m_Config.UseCodePage);
+		text = buffer.string(this->m_config.cdpg);
 	}
 
 	auto multi_script_helper::read_text(std::string_view path, std::vector<script_helper::text>& result) -> bool {
@@ -439,14 +441,14 @@ namespace mes {
 					size_t find_pos = file.find_last_of("\\/");
 					if (find_pos == std::string::npos)
 					{
-						if (file == config::name)
+						if (file == config::k_name)
 						{
 							this->m_ConfigFile.assign(file);
 							continue;
 						}
 					}
 					std::string_view name = file.c_str() + find_pos + 1;
-					if (name == config::name)
+					if (name == config::k_name)
 					{
 						this->m_ConfigFile.assign(file);
 						continue;
@@ -481,7 +483,7 @@ namespace mes {
 		return *this;
 	}
 
-	auto multi_script_helper::run(success_call onSuccess, failure_call onFailure, bool _noexcept) -> multi_script_helper&
+	auto multi_script_helper::run(success_call_t onSuccess, failure_call_t onFailure, bool _noexcept) -> multi_script_helper&
 	{
 
 		this->m_OnSuccess = onSuccess;
@@ -512,9 +514,9 @@ namespace mes {
 	auto multi_script_helper::import_all_text() -> void
 	{
 
-		auto&& CONFIG = multi_script_helper::config::read(this->m_ConfigFile);
+		auto config{ multi_script_helper::config::read(this->m_ConfigFile) };
 
-		if (CONFIG.InputPath.empty()) 
+		if (config.path.empty())
 		{
 			throw std::exception
 			{
@@ -523,7 +525,7 @@ namespace mes {
 			};
 		}
 
-		if (!std::filesystem::is_directory(CONFIG.InputPath)) 
+		if (!std::filesystem::is_directory(config.path))
 		{
 			throw std::exception
 			{
@@ -532,15 +534,16 @@ namespace mes {
 			};
 		}
 
-		size_t pos = CONFIG.InputPath.find_last_of("\\/");
-		if (pos != (CONFIG.InputPath.size() - 1)) 
+		size_t pos = config.path.find_last_of("\\/");
+		if (pos != (config.path.size() - 1))
 		{
-			CONFIG.InputPath.append("\\");
+			config.path.append("\\");
 		}
 
 		size_t success_count{};
 		std::string opt_path{};
-		text_formater formater{ CONFIG };
+		text_formater formater{ config };
+
 		for (const std::string& file : this->m_FileList)
 		{
 
@@ -574,7 +577,7 @@ namespace mes {
 					opt_name.assign(mes_path.substr(0, find_pos));
 				}
 				opt_name.append(".mes");
-				mes_path.assign(CONFIG.InputPath + opt_name);
+				mes_path.assign(config.path + opt_name);
 			}
 
 			try {
@@ -630,8 +633,7 @@ namespace mes {
 				formater.format(text.string);
 			}
 
-			bool imported = this->m_Helper.import_scene_text(texts);
-
+			bool imported{ this->m_Helper.import_scene_text(texts) };
 			if (imported)
 			{
 				std::string opt_file_path{ opt_path + opt_name };
@@ -643,7 +645,7 @@ namespace mes {
 					);
 					continue;
 				}
-				auto raw = this->m_Helper.get_view().raw();
+				const auto& raw{ this->m_Helper.get_view().raw() };
 				opt_file.write(raw.data, 1, raw.size);
 				this->on_success(file, opt_file_path);
 				success_count++;
@@ -791,13 +793,13 @@ namespace mes {
 	{
 
 		utils::string::buffer buffer{};
-		buffer.write_as_format("%s\n%s\n\n", config::path, this->m_IptDir);
-		buffer.write_as_format("%s\n%d\n\n", config::cdpg, 936);
-		buffer.write_as_format("%s\n%d\n\n", config::tmin, 22);
-		buffer.write_as_format("%s\n%d\n\n", config::tmax, 24);
-		buffer.write_as_format("%s\n[]:[]\n\n", config::bfrp);
-		buffer.write_as_format("%s\n[]:[]\n\n", config::atrp);
-		std::string opt_config_path{ opt_dir + config::name };
+		buffer.write_as_format("%s\n%s\n\n", config::k_path, this->m_IptDir);
+		buffer.write_as_format("%s\n%d\n\n", config::k_cdpg, config::def_cdpg);
+		buffer.write_as_format("%s\n%d\n\n", config::k_tmin, config::def_tmin);
+		buffer.write_as_format("%s\n%d\n\n", config::k_tmax, config::def_tmax);
+		buffer.write_as_format("%s\n[]:[]\n\n", config::k_bfrp);
+		buffer.write_as_format("%s\n[]:[]\n\n", config::k_atrp);
+		std::string opt_config_path{ opt_dir + config::k_name };
 		utils::file opt_config_file(opt_config_path, "wb");
 		if (!opt_config_file.is_open())
 		{
