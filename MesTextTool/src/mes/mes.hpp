@@ -26,9 +26,55 @@ namespace mes {
 		static const script_info infos[];
 		static auto query(std::string_view name) -> const script_info*;
 		static auto query(uint16_t version) -> const script_info*;
+
+		#pragma pack(push, 1)
+		struct uint8x2_t 
+		{
+			uint8_t op;
+			uint8_t arg1;
+			uint8_t arg2;
+		};
+		#pragma pack(pop)
+
+		#pragma pack(push, 1)
+		struct uint8str_t 
+		{
+			uint8_t op;
+			uint8_t arg1;
+			char str[];
+		};
+		#pragma pack(pop)
+
+		#pragma pack(push, 1)
+		struct string_t 
+		{
+			uint8_t op;
+			char str[];
+		};
+		#pragma pack(pop)
+
+		#pragma pack(push, 1)
+		struct encstr_t
+		{
+			uint8_t op;
+			char str[];
+		};
+		#pragma pack(pop)
+
+		#pragma pack(push, 1)
+		struct uint16x4_t
+		{
+			uint8_t op;
+			uint16_t arg1;
+			uint16_t arg2;
+			uint16_t arg3;
+			uint16_t arg4;
+		};
+		#pragma pack(pop)
 	};
 
-	class script_view {
+	class script_view 
+	{
 	
 	public:
 		struct token { int32_t offset{}, length{}; uint8_t value{}; };
@@ -80,11 +126,13 @@ namespace mes {
 		script_view                  m_MesView{};
 	};
 
-	class multi_script_helper {
+	class multi_script_helper 
+	{
 	public:
-		struct config {
+		struct config 
+		{
 
-			using replaces = std::vector<std::pair<std::wstring, std::wstring>>;
+			using vector_t = std::vector<std::pair<std::wstring, std::wstring>>;
 
 			inline static constexpr char path[] = "#InputPath";
 			inline static constexpr char cdpg[] = "#UseCodePage";
@@ -98,24 +146,23 @@ namespace mes {
 			int32_t UseCodePage{ 936 };
 			int32_t MinLength{ 22 };
 			int32_t MaxLength{ 24 };
-			replaces Before{};
-			replaces After{};
+			vector_t Before{};
+			vector_t After{};
 
 			static auto read(std::string_view path) -> config;
 			static auto read(std::string_view path, config& result) -> void;
 		};
 
-		class text_formater {
-
-			config& m_Config;
-
+		class text_formater 
+		{
+			const config& m_Config;
 			static auto is_first_char_forbidden(wchar_t chr) -> bool;
 			static auto is_last_char_forbidden (wchar_t chr) -> bool;
 			static auto is_talking(wchar_t beg, wchar_t end) -> bool;
 			static auto is_half_width(wchar_t wchar) -> bool;
 
 		public:
-			text_formater(config& config);
+			text_formater(const config& config);
 			auto format(std::string& text) -> void;
 		};
 
