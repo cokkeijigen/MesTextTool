@@ -131,31 +131,34 @@ namespace mes {
 	public:
 		struct config 
 		{
-
 			using vector_t = std::vector<std::pair<std::wstring, std::wstring>>;
 
-			inline static constexpr char path[] = "#InputPath";
-			inline static constexpr char cdpg[] = "#UseCodePage";
-			inline static constexpr char tmin[] = "#Text-MinLength";
-			inline static constexpr char tmax[] = "#Text-MaxLength";
-			inline static constexpr char bfrp[] = "#Before-Replaces";
-			inline static constexpr char atrp[] = "#After-Replaces";
-			inline static constexpr char name[] = ".MesTextTool";
+			inline static const constexpr char k_path[]{ "#InputPath"       };
+			inline static const constexpr char k_cdpg[]{ "#UseCodePage"     };
+			inline static const constexpr char k_tmin[]{ "#Text-MinLength"  };
+			inline static const constexpr char k_tmax[]{ "#Text-MaxLength"  };
+			inline static const constexpr char k_bfrp[]{ "#Before-Replaces" };
+			inline static const constexpr char k_atrp[]{ "#After-Replaces"  };
+			inline static const constexpr char k_name[]{ ".MesTextTool"     };
+			inline static const constexpr auto def_cdpg{ 936 };
+			inline static const constexpr auto def_tmin{ 22 };
+			inline static const constexpr auto def_tmax{ 24 };
 
-			std::string InputPath{};
-			int32_t UseCodePage{ 936 };
-			int32_t MinLength{ 22 };
-			int32_t MaxLength{ 24 };
-			vector_t Before{};
-			vector_t After{};
+		public:
+			std::string path{};
+			int32_t cdpg{ def_cdpg };
+			int32_t tmin{ def_tmin };
+			int32_t tmax{ def_tmax };
+			vector_t bfrp{};
+			vector_t atrp{};
 
 			static auto read(std::string_view path) -> config;
 			static auto read(std::string_view path, config& result) -> void;
 		};
 
-		class text_formater 
+		class text_formater
 		{
-			const config& m_Config;
+			const config& m_config;
 			static auto is_first_char_forbidden(wchar_t chr) -> bool;
 			static auto is_last_char_forbidden (wchar_t chr) -> bool;
 			static auto is_talking(wchar_t beg, wchar_t end) -> bool;
@@ -170,19 +173,20 @@ namespace mes {
 
 		static inline constexpr auto defualt_code_page{ static_cast<uint32_t>(932) };
 
-		using success_call = std::function<void(std::string_view ipt, std::string_view opt)>;
-		using failure_call = std::function<void(std::string_view ipt)>;
-		using file_list    = std::vector<std::string>;
+		using success_call_t = std::function<void(std::string_view ipt, std::string_view opt)>;
+		using failure_call_t = std::function<void(std::string_view ipt)>;
+		using file_list_t    = std::vector<std::string>;
+
 	private:
 
 		std::string   m_IptDir{};
 		std::string   m_OptDir{};
-		file_list   m_FileList{};
+		file_list_t   m_FileList{};
 		script_helper m_Helper{};
 		
 		uint32_t   m_IptCodePage{};
-		success_call m_OnSuccess{};
-		failure_call m_OnFailure{};
+		success_call_t m_OnSuccess{};
+		failure_call_t m_OnFailure{};
 		std::string m_ConfigFile{};
 		std::string m_ErrorMessage{};
 		
@@ -201,13 +205,14 @@ namespace mes {
 		{
 			if (this->m_OnSuccess) { this->m_OnSuccess(ipt, opt); };
 		}
+
 	public:
 
 		multi_script_helper(std::string_view ipt_dirOrFile, std::string_view opt_dir, const script_info* info = {}, uint32_t ipt_cdpg = { defualt_code_page });
 		
 		auto get_err_msg() const  -> const std::string&;
 		auto set_ipt_cdpg(int32_t cdpg)  -> multi_script_helper&;
-		auto run(success_call onSuccess = {}, failure_call onFailure = {}, bool _noexcept = {false}) -> multi_script_helper&;
+		auto run(success_call_t onSuccess = {}, failure_call_t onFailure = {}, bool _noexcept = {false}) -> multi_script_helper&;
 	};
 
 }
