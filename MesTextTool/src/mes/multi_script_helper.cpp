@@ -674,10 +674,22 @@ namespace mes
 
 				if (!this->m_Helper.read(file).is_parsed())
 				{
-					this->on_failure(
-						"Failed to read or parse mes file.",
-						file
-					);
+					auto mes{ this->m_Helper.get_view() };
+					if (mes.raw().size && mes.info() == nullptr)
+					{
+						this->on_failure(
+							"Unknown Mes version, "
+							"please try manually specifying the game.",
+							file
+						);
+					}
+					else 
+					{
+						this->on_failure(
+							"Failed to read or parse mes file.",
+							file
+						);
+					}
 					continue;
 				}
 			}
