@@ -424,7 +424,7 @@ namespace mes
 		{
 			for (const auto& entry : std::filesystem::directory_iterator(ipt_dirOrFile))
 			{
-				const auto&& file = entry.path().string();
+				const auto&& file{ entry.path().string() };
 				if (this->m_ConfigFile.empty())
 				{
 					size_t find_pos = file.find_last_of("\\/");
@@ -436,7 +436,7 @@ namespace mes
 							continue;
 						}
 					}
-					std::string_view name = file.c_str() + find_pos + 1;
+					std::string_view name{ file.c_str() + find_pos + 1 };
 					if (name == config::k_name)
 					{
 						this->m_ConfigFile.assign(file);
