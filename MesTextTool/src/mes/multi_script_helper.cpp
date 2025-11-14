@@ -136,7 +136,7 @@ namespace mes {
 		}
 	}
 
-	multi_script_helper::text_formater::text_formater(config& config) : m_Config(config)
+	multi_script_helper::text_formater::text_formater(const config& config) : m_Config(config)
 	{
 	}
 
