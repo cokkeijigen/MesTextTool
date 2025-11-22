@@ -160,7 +160,7 @@ namespace console
 		return this->write(u16string);
 	}
 
-	auto console_helper::write(const char* fmt, va_list arg_list) const noexcept -> const console_helper&
+	auto console_helper::vf_write(const char* fmt, va_list arg_list) const noexcept -> const console_helper&
 	{
 		if (this->m_Output == nullptr)
 		{
@@ -177,7 +177,7 @@ namespace console
 		return { *this };
 	}
 
-	auto console_helper::write(const wchar_t* fmt, va_list arg_list) const noexcept -> const console_helper&
+	auto console_helper::vf_write(const wchar_t* fmt, va_list arg_list) const noexcept -> const console_helper&
 	{
 		if (this->m_Output == nullptr)
 		{
@@ -194,12 +194,12 @@ namespace console
 		return { *this };
 	}
 
-	auto console_helper::write(const char8_t* fmt, va_list arg_list) const noexcept -> const console_helper&
+	auto console_helper::vf_write(const char8_t* fmt, va_list arg_list) const noexcept -> const console_helper&
 	{
 		return { this->set_cp(cdpg::utf_8).write(reinterpret_cast<const char*>(fmt), arg_list).reset_cp() };
 	}
 
-	auto console_helper::write(const char16_t* fmt, va_list arg_list) const noexcept -> const console_helper&
+	auto console_helper::vf_write(const char16_t* fmt, va_list arg_list) const noexcept -> const console_helper&
 	{
 		return { this->write(reinterpret_cast<const wchar_t*>(fmt), arg_list) };
 	}

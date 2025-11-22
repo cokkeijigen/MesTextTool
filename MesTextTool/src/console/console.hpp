@@ -190,6 +190,11 @@ namespace console
 		HANDLE m_Output{};
 		HANDLE m_Input{};
 
+		auto vf_write(const char*     fmt, va_list arg_list) const noexcept -> const console_helper&;
+		auto vf_write(const wchar_t*  fmt, va_list arg_list) const noexcept -> const console_helper&;
+		auto vf_write(const char8_t*  fmt, va_list arg_list) const noexcept -> const console_helper&;
+		auto vf_write(const char16_t* fmt, va_list arg_list) const noexcept -> const console_helper&;
+
 	public:
 
 		~console_helper() noexcept;
@@ -217,11 +222,6 @@ namespace console
 
 		auto write(std::u8string_view   content) const noexcept -> const console_helper&;
 		auto write(std::u16string_view  content) const noexcept -> const console_helper&;
-
-		auto write(const char*     fmt, va_list arg_list) const noexcept -> const console_helper&;
-		auto write(const wchar_t*  fmt, va_list arg_list) const noexcept -> const console_helper&;
-		auto write(const char8_t*  fmt, va_list arg_list) const noexcept -> const console_helper&;
-		auto write(const char16_t* fmt, va_list arg_list) const noexcept -> const console_helper&;
 
 		inline auto write(const use_char_t auto* fmt, ...) const noexcept -> const console_helper&;
 
@@ -490,7 +490,7 @@ namespace console
 	{
 		va_list arg_list{};
 		va_start(arg_list, fmt);
-		this->write(fmt, arg_list);
+		this->vf_write(fmt, arg_list);
 		va_end(arg_list);
 
 		return { *this };
