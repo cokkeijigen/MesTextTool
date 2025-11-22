@@ -399,10 +399,10 @@ namespace mes
 	}
 
 	multi_script_helper::multi_script_helper(std::string_view ipt_dirOrFile, std::string_view opt_dir, const script_info* info, uint32_t ipt_cdpg) :
-		m_IptDir(ipt_dirOrFile), m_OptDir(opt_dir), m_IptCodePage(ipt_cdpg)
+		m_iptdir(ipt_dirOrFile), m_optdir(opt_dir), m_iptcdpg(ipt_cdpg)
 	{
 
-		this->m_Helper.set_info(info);
+		this->m_helper.set_info(info);
 
 		if (ipt_dirOrFile.empty())
 		{
@@ -425,25 +425,25 @@ namespace mes
 			for (const auto& entry : std::filesystem::directory_iterator(ipt_dirOrFile))
 			{
 				const auto&& file{ entry.path().string() };
-				if (this->m_ConfigFile.empty())
+				if (this->m_configfile.empty())
 				{
 					size_t find_pos = file.find_last_of("\\/");
 					if (find_pos == std::string::npos)
 					{
 						if (file == config::k_name)
 						{
-							this->m_ConfigFile.assign(file);
+							this->m_configfile.assign(file);
 							continue;
 						}
 					}
 					std::string_view name{ file.c_str() + find_pos + 1 };
 					if (name == config::k_name)
 					{
-						this->m_ConfigFile.assign(file);
+						this->m_configfile.assign(file);
 						continue;
 					}
 				}
-				this->m_FileList.push_back(file);
+				this->m_filelist.push_back(file);
 			}
 			return;
 		}
@@ -451,36 +451,36 @@ namespace mes
 		size_t find_pos = ipt_dirOrFile.find_last_of("\\/");
 		if (find_pos != std::string::npos && find_pos != ipt_dirOrFile.size() - 1)
 		{
-			this->m_IptDir.assign(ipt_dirOrFile, 0, find_pos);
-			this->m_FileList.emplace_back(ipt_dirOrFile);
+			this->m_iptdir.assign(ipt_dirOrFile, 0, find_pos);
+			this->m_filelist.emplace_back(ipt_dirOrFile);
 		}
 		else
 		{
-			this->m_IptDir.assign(".\\");
-			this->m_FileList.emplace_back(ipt_dirOrFile);
+			this->m_iptdir.assign(".\\");
+			this->m_filelist.emplace_back(ipt_dirOrFile);
 		}
 	}
 
 	auto multi_script_helper::get_err_msg() const -> const std::string&
 	{
-		return this->m_ErrorMessage;
+		return this->m_error_message;
 	}
 
-	auto multi_script_helper::set_ipt_cdpg(int32_t cdpg) -> multi_script_helper&
+	auto multi_script_helper::set_iptcdpg(int32_t cdpg) -> multi_script_helper&
 	{
-		this->m_IptCodePage = cdpg;
+		this->m_iptcdpg = cdpg;
 		return *this;
 	}
 
 	auto multi_script_helper::run(success_call_t onSuccess, failure_call_t onFailure, bool _noexcept) -> multi_script_helper&
 	{
 
-		this->m_OnSuccess = onSuccess;
-		this->m_OnFailure = onFailure;
+		this->m_onsuccess = onSuccess;
+		this->m_onfailure = onFailure;
 
 		try 
 		{
-			if (!this->m_ConfigFile.empty())
+			if (!this->m_configfile.empty())
 			{
 				this->import_all_text();
 			}
@@ -503,7 +503,7 @@ namespace mes
 	auto multi_script_helper::import_all_text() -> void
 	{
 
-		auto config{ multi_script_helper::config::read(this->m_ConfigFile) };
+		auto config{ multi_script_helper::config::read(this->m_configfile) };
 
 		if (config.path.empty())
 		{
@@ -533,7 +533,7 @@ namespace mes
 		std::string opt_path{};
 		text_formater formater{ config };
 
-		for (const std::string& file : this->m_FileList)
+		for (const std::string& file : this->m_filelist)
 		{
 
 			if (!utils::extension_check(file, ".txt")) 
@@ -570,7 +570,7 @@ namespace mes
 			}
 
 			try {
-				if (!this->m_Helper.read(mes_path, false).is_parsed())
+				if (!this->m_helper.read(mes_path, false).is_parsed())
 				{
 					this->on_failure(
 						"Failed to read or parse mes file.",
@@ -587,8 +587,8 @@ namespace mes
 
 			if (opt_path.empty()) 
 			{
-				const char* name = this->m_Helper.get_view().info()->name;
-				opt_path.assign(this->m_OptDir).append(name).append("_mes\\");
+				const char* name = this->m_helper.get_view().info()->name;
+				opt_path.assign(this->m_optdir).append(name).append("_mes\\");
 			}
 
 			if (!std::filesystem::exists(opt_path)) {
@@ -622,7 +622,7 @@ namespace mes
 				formater.format(text.string);
 			}
 
-			bool imported{ this->m_Helper.import_scene_text(texts) };
+			bool imported{ this->m_helper.import_scene_text(texts) };
 			if (imported)
 			{
 				std::string opt_file_path{ opt_path + opt_name };
@@ -634,7 +634,7 @@ namespace mes
 					);
 					continue;
 				}
-				const auto& raw{ this->m_Helper.get_view().raw() };
+				const auto& raw{ this->m_helper.get_view().raw() };
 				opt_file.write(raw.data, 1, raw.size);
 				this->on_success(file, opt_file_path);
 				success_count++;
@@ -661,7 +661,7 @@ namespace mes
 		size_t success_count{};
 		std::string opt_path{};
 		utils::string::buffer buffer{}, line{};
-		for (const std::string& file : this->m_FileList)
+		for (const std::string& file : this->m_filelist)
 		{
 
 			if (!utils::extension_check(file, ".mes"))
@@ -672,9 +672,9 @@ namespace mes
 
 			try {
 
-				if (!this->m_Helper.read(file).is_parsed())
+				if (!this->m_helper.read(file).is_parsed())
 				{
-					auto mes{ this->m_Helper.get_view() };
+					auto mes{ this->m_helper.get_view() };
 					if (mes.raw().size && mes.info() == nullptr)
 					{
 						this->on_failure(
@@ -701,8 +701,8 @@ namespace mes
 
 			if (opt_path.empty())
 			{
-				const char* name = this->m_Helper.get_view().info()->name;
-				opt_path.assign(this->m_OptDir).append(name).append("_text\\");
+				const char* name = this->m_helper.get_view().info()->name;
+				opt_path.assign(this->m_optdir).append(name).append("_text\\");
 			}
 
 			if (!std::filesystem::exists(opt_path))
@@ -755,7 +755,7 @@ namespace mes
 			}
 
 			buffer.reset();
-			const auto& texts = this->m_Helper.fetch_scene_text();
+			const auto& texts = this->m_helper.fetch_scene_text();
 			for (size_t i = 0; i < texts.size(); i++)
 			{
 				const script_helper::text& text = texts[i];
@@ -765,7 +765,7 @@ namespace mes
 				}
 				buffer.write_as_format("#0x%X\n", text.offset);
 				line.reset().write(text.string).replace("\n", "\\n");
-				line.convert_to_utf8(this->m_IptCodePage);
+				line.convert_to_utf8(this->m_iptcdpg);
 				buffer.write_as_format(u8"★◎  %03d  ◎★//%s\n", i + 1, line.data());
 				buffer.write_as_format(u8"★◎  %03d  ◎★%s\n\n", i + 1, line.data());
 			}
@@ -794,7 +794,7 @@ namespace mes
 	{
 
 		utils::string::buffer buffer{};
-		buffer.write_as_format("%s\n%s\n\n", config::k_path, this->m_IptDir);
+		buffer.write_as_format("%s\n%s\n\n", config::k_path, this->m_iptdir.data());
 		buffer.write_as_format("%s\n%d\n\n", config::k_cdpg, config::def_cdpg);
 		buffer.write_as_format("%s\n%d\n\n", config::k_tmin, config::def_tmin);
 		buffer.write_as_format("%s\n%d\n\n", config::k_tmax, config::def_tmax);
