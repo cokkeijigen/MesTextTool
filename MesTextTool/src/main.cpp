@@ -93,7 +93,7 @@ static auto run(int argc, const char** args) -> void
 
 		if (!enable_log)
 		{
-			xcsl::helper.clear();
+			//xcsl::helper.clear();
 			xcsl::helper.writeline("[COMPLETE]\n");
 		}
 	}
