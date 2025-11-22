@@ -13,17 +13,26 @@ namespace mes {
 			uint8_t beg{}, end{};
 			inline auto its(uint8_t key) const -> bool;
 		};
-		const char name[15];
-		uint16_t version;
-		section	 uint8x2; // [op: byte] [arg1: uint8] [arg2: uint8]
-		section uint8str; // [op: byte] [arg1: uint8] [arg2: string]
-		section	  string; // [op: byte] [arg1: string]
-		section   encstr; // [op: byte] [arg1: encstr]
-		section uint16x4; // [op: byte] [arg1: uint16] [arg2: uint16] [arg3: uint16] [arg4: uint16]
-		uint8_t optunenc; // the opcode for unencrypted strings in scene text
-		uint8_t deckey;
+
+		enum offset_t: uint8_t 
+		{ 
+			offset1, // head[0] * 0x04 + 0x04
+			offset2  // head[0] * 0x06 + 0x04
+		};
+
+		const char* name;
+		const offset_t  offset;
+		const uint16_t version;
+		const section  uint8x2; // [op: byte] [arg1: uint8] [arg2: uint8]
+		const section uint8str; // [op: byte] [arg1: uint8] [arg2: string]
+		const section	string; // [op: byte] [arg1: string]
+		const section   encstr; // [op: byte] [arg1: encstr]
+		const section uint16x4; // [op: byte] [arg1: uint16] [arg2: uint16] [arg3: uint16] [arg4: uint16]
+		const uint8_t   deckey;
+		const std::initializer_list<uint8_t> opstrs; // the opcode for unencrypted strings in scene text
 		
 		static const script_info infos[];
+		static auto query(std::span<uint8_t> data) -> const script_info*;
 		static auto query(std::string_view name) -> const script_info*;
 		static auto query(uint16_t version) -> const script_info*;
 
@@ -87,21 +96,23 @@ namespace mes {
 
 		auto info() const -> const script_info*;
 		auto raw () const -> view<uint8_t>;
-		auto asmbin() const -> view<uint8_t>;
-		auto blocks() const -> view<int32_t>;
-		auto tokens() const -> const std::vector<token>&;
+		auto asmbin () const -> view<uint8_t>;
+		auto labels () const -> view<int32_t>;
+		auto tokens () const -> const std::vector<token>&;
 		auto version() const -> uint16_t;
 	private:
-		const script_info* m_Info{};
-		std::vector<token> m_Tokens{};
-		view<int32_t> m_Blocks{};
-		view<uint8_t> m_Asmbin{};
-		view<uint8_t> m_Raw{};
-		uint16_t m_Version{};
+		const script_info* m_info{};
+		std::vector<token> m_tokens{};
+		view<int32_t> m_labels{};
+		view<uint8_t> m_asmbin{};
+		view<uint8_t> m_raw{};
+		uint16_t m_version{};
+
 		inline auto token_parse() -> void;
 	};
 
-	class script_helper {
+	class script_helper 
+	{
 
 	public:
 
@@ -121,9 +132,9 @@ namespace mes {
 		auto get_view() -> const script_view&;
 
 	private:
-		utils::xmem::buffer<uint8_t> m_Buffer{};
-		const script_info*           m_Info{};
-		script_view                  m_MesView{};
+		utils::xmem::buffer<uint8_t> m_buffer {};
+		const script_info*           m_info   {};
+		script_view                  m_mesview{};
 	};
 
 	class multi_script_helper 
@@ -178,16 +189,17 @@ namespace mes {
 
 	private:
 
-		std::string   m_IptDir{};
-		std::string   m_OptDir{};
-		file_list_t   m_FileList{};
-		script_helper m_Helper{};
-		
-		uint32_t   m_IptCodePage{};
-		success_call_t m_OnSuccess{};
-		failure_call_t m_OnFailure{};
-		std::string m_ConfigFile{};
-		std::string m_ErrorMessage{};
+		script_helper m_helper {};
+		std::string   m_iptdir {};
+		std::string   m_optdir {};
+		uint32_t      m_iptcdpg{};
+
+		file_list_t    m_filelist {};
+		success_call_t m_onsuccess{};
+		failure_call_t m_onfailure{};
+
+		std::string m_configfile{};
+		std::string m_error_message{};
 		
 		auto export_all_text() -> void;
 		auto import_all_text() -> void;
@@ -196,21 +208,21 @@ namespace mes {
 
 		inline auto on_failure(std::string_view msg, std::string_view ipt) -> void 
 		{
-			this->m_ErrorMessage.assign(msg);
-			if (this->m_OnFailure) { this->m_OnFailure(ipt); }
+			this->m_error_message.assign(msg);
+			if (this->m_onfailure) { this->m_onfailure(ipt); }
 		}
 		
 		inline auto on_success(std::string_view ipt, std::string_view opt) -> void 
 		{
-			if (this->m_OnSuccess) { this->m_OnSuccess(ipt, opt); };
+			if (this->m_onsuccess) { this->m_onsuccess(ipt, opt); };
 		}
 
 	public:
 
-		multi_script_helper(std::string_view ipt_dirOrFile, std::string_view opt_dir, const script_info* info = {}, uint32_t ipt_cdpg = { defualt_code_page });
+		multi_script_helper(std::string_view ipt_dir_or_file, std::string_view opt_dir, const script_info* info = {}, uint32_t ipt_cdpg = { defualt_code_page });
 		
 		auto get_err_msg() const  -> const std::string&;
-		auto set_ipt_cdpg(int32_t cdpg)  -> multi_script_helper&;
+		auto set_iptcdpg(int32_t cdpg)  -> multi_script_helper&;
 		auto run(success_call_t onSuccess = {}, failure_call_t onFailure = {}, bool _noexcept = {false}) -> multi_script_helper&;
 	};
 
