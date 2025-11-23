@@ -440,24 +440,12 @@ namespace mes
 				std::string text{ reinterpret_cast<char*>(asmbin.data + token.offset + 1) };
 				for (char& ch : text) { ch += this->m_mesview.info()->enckey; } // 解密字符串
 				result.push_back({ .offset = token.offset + base, .string = text });
-				for (char& ch : text) 
-				{
-					if (ch == '\n') ch = ' ';
-					//ch = this->m_MesView.info()->enckey; 
-				} 
-				/*xcsl::helper.set_cp(xcsl::cdpg::sjis);
-				xcsl::helper.write("[0x%02X:0x%X]%s\n", int(token.value), int(token.offset + base), text.data());
-				xcsl::helper.reset_cp();*/
 			}
 			else if (token.value != 0x00 && std::ranges::contains(info->opstrs, token.value))
 			{
 				std::string text{ reinterpret_cast<char*>(asmbin.data + token.offset + 1) };
 				result.push_back({ .offset = token.offset + base, .string = text });
-				/*xcsl::helper.set_cp(xcsl::cdpg::sjis);
-				xcsl::helper.write("[0x%02X]%s\n", int(token.value), text.data());
-				xcsl::helper.reset_cp();*/
 			}
-
 			
 		}
 		return result;
