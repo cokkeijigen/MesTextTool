@@ -28,7 +28,7 @@ namespace mes {
 		const section	string; // [op: byte] [arg1: string]
 		const section   encstr; // [op: byte] [arg1: encstr]
 		const section uint16x4; // [op: byte] [arg1: uint16] [arg2: uint16] [arg3: uint16] [arg4: uint16]
-		const uint8_t   deckey;
+		const uint8_t   enckey;
 		const std::initializer_list<uint8_t> opstrs; // the opcode for unencrypted strings in scene text
 		
 		static const script_info infos[];
