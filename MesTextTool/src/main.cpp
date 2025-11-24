@@ -42,8 +42,8 @@ static auto run(int argc, const char** args) -> void
 			work_path = self_path.substr(0, find_pos + 1);
 
 			utils::string::buffer exename{ self_path.substr(find_pos + 1) };
-			auto splits{ exename.split_of('.', '-', '_') };
-			for (auto& arg : std::ranges::reverse_view(splits))
+			const auto splits{ exename.to_lower().split_of('.', '-', '_') };
+			for (const auto& arg : std::ranges::reverse_view(splits))
 			{
 				if (nullptr == input_info)
 				{
