@@ -52,6 +52,7 @@ namespace mes
 		{ "homemaid"  , offset1, 0x1A63, { 0x00, 0x2B }, { 0xFF, 0xFF }, { 0x2C, 0x48 }, { 0x49, 0x4C }, { 0x4D, 0xFF },  0x20, { 0x31 }/*---------*/}, // ホームメイド -Home maid-
 		{ "hmsw"      , offset1, 0x4F69, { 0x00, 0x28 }, { 0x29, 0x2E }, { 0x2F, 0x49 }, { 0x4A, 0x4D }, { 0x4E, 0xFF },  0x20, { 0x35, 0x45 }/*---*/}, // ホームメイド スイーツ
 		{ "ag2dc"     , offset1, 0x7C6A, { 0x00, 0x29 }, { 0x2A, 0x2F }, { 0x30, 0x4A }, { 0x4B, 0x4E }, { 0x4F, 0xFF },  0x20, { 0x36, 0x46 }/*---*/}, // A.G.II.D.C.　～あるぴじ学園2.0　サーカス史上最大の危機！？～
+		{ "sukumizu"  , offset1, 0x005F, { 0x00, 0x2B }, { 0xFF, 0xFF }, { 0x2C, 0x46 }, { 0x47, 0x4A }, { 0x4B, 0xFF },  0x20, { 0x31, 0x44 }/*---*/}, // すくみず～フェチ☆になるもんっ！～
 		{ "suika"     , offset1, 0x005F, { 0x00, 0x2B }, { 0xFF, 0xFF }, { 0x2C, 0x46 }, { 0x47, 0x4A }, { 0x4B, 0xFF },  0x20, { 0x42, 0x44 }/*---*/}, // 水夏 ~SUIKA~全年齢版、水夏 ~SUIKAおー・157章~
 		{ "suikaas+"  , offset1, 0x2263, { 0x00, 0x2B }, { 0xFF, 0xFF }, { 0x2C, 0x48 }, { 0x49, 0x4C }, { 0x4D, 0xFF },  0x20, { 0x45 }/*---------*/}, // 水夏A.S+ ～アズプラス～
 		{ "suika2"    , offset1, 0x8279, { 0x00, 0x2E }, { 0x2F, 0x36 }, { 0x37, 0x54 }, { 0x55, 0x57 }, { 0x58, 0xFF },  0x20, { 0x4C }/*---------*/}, // 水夏弐律
@@ -70,14 +71,14 @@ namespace mes
 			return nullptr;
 		}
 
-		const auto head{ reinterpret_cast<int32_t*>(data.data()) };
 		const auto size{ data.size() };
+		const auto head{ reinterpret_cast<int32_t*>(data.data()) };
 
 		uint16_t version1{}, version2{};
 		if (size > 4)
 		{
-			auto offset1{ head[0] * 0x04 + 0x04 };
-			auto offset2{ head[0] * 0x06 + 0x04 };
+			const auto offset1{ head[0] * 0x04 + 0x04 };
+			const auto offset2{ head[0] * 0x06 + 0x04 };
 			
 			if (size > offset1 + 0x02) 
 			{
@@ -96,56 +97,40 @@ namespace mes
 
 		for (const auto& info : script_info::infos)
 		{
-			// 减少出错概率，head[1]为0x03优先匹配version2
-			if (head[1] == 0x03 && version2 != 0x00)
+			switch (info.offset)
 			{
-				const auto matched
+			case script_info::offset1:
+			{
+				if (version1 == 0x00)
 				{
-					info.offset == script_info::offset2 &&
-					info.version == version2
-				};
-				if (matched)
+					continue;
+				}
+				if ((info.version & 0xFF00) == 0x00)
+				{
+					if ((version1 & 0xFF) == info.version)
+					{
+						return &info;
+					}
+				}
+				else if (info.version == version1)
 				{
 					return &info;
 				}
+				continue;
 			}
-
-			const auto is_ver1_matched
+			case script_info::offset2:
 			{
-				version1 != 0x00 &&
-				info.offset == script_info::offset1 &&
-				info.version == version1
+				if (version2 == 0x00)
+				{
+					continue;
+				}
+				if (head[1] == 0x03 && info.version == version2)
+				{
+					return &info;
+				}
+				continue;
+			}
 			};
-
-			if (is_ver1_matched)
-			{
-				return &info;
-			}
-
-			const auto is_ver2_matched
-			{
-				version2 != 0x00 &&
-				info.offset == script_info::offset2 &&
-				info.version == version2
-			};
-
-			if (is_ver2_matched)
-			{
-				return &info;
-			}
-
-			auto is_abyte_ver1_matched
-			{
-				head[1] != 0x03 && 
-				info.offset == script_info::offset1 &&
-				(info.version & 0xFF00) == 0x00 &&
-				(version1 & 0xFF) == info.version
-			};
-
-			if (is_abyte_ver1_matched)
-			{
-				return &info;
-			}
 		}
 
 		return nullptr;
@@ -430,7 +415,7 @@ namespace mes
 		{
 			if (info->string.its(token.value))
 			{
-				//if(token.value != 0x46)
+				//if(token.value == 0x49)
 				__test_text__({ reinterpret_cast<char*>(asmbin.data + token.offset + 1) }, int(token.value), xcsl::cdpg::sjis);
 				//__test_text__({ reinterpret_cast<char*>(asmbin.data + token.offset + 1) }, int(token.value), xcsl::cdpg::gbk);
 			}
