@@ -35,6 +35,7 @@ namespace mes {
 		static auto query(std::span<uint8_t> data) -> const script_info*;
 		static auto query(std::string_view name) -> const script_info*;
 		static auto query(uint16_t version) -> const script_info*;
+		auto operator =(const mes::script_info&) -> script_info&;
 
 		#pragma pack(push, 1)
 		struct uint8x2_t 
