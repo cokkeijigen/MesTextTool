@@ -57,6 +57,7 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 ```
 | 游戏| 简称 |
 | :-----| :----: |
+|Aries Pure Dream|ariespd|
 |Aries Love Dream|ariesld|
 |終の館 ～恋文～|tyakata1|
 |終の館～双ツ星～|tyakata2|
