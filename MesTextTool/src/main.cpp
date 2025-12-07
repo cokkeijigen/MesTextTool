@@ -12,8 +12,8 @@ namespace mes_text_tool
 	inline static constexpr std::wstring_view information
 	{
 		L"----------------------------------------------------\n"
-		L" " PROJECT_NAME " v" PROJECT_VERSION " by: iTsukezigen.\n"
-		" GitHub: https://github.com/cokkeijigen/MesTextTool\n"
+		L" " PROJECT_NAME " v" PROJECT_VERSION " by iTsukezigen.\n"
+		L" GitHub: https://github.com/cokkeijigen/MesTextTool\n"
 	};
 
 	static auto get_value_from_exename(const wchar_t* args, bool& log, const mes::script_info*& info, uint32_t& cdpg) -> void
