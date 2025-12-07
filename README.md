@@ -66,8 +66,8 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 |終の館 ～人形～|tyakata5|
 |水夏弐律 | suika2 |
 |水夏A.S+ ～アズプラス～ | suikaas+ |
-|水夏 ~SUIKAおー・157章~| suika |
-|水夏 ~SUIKA~全年齢版 | suika |
+|水夏 ～SUIKAおー・157章～| suika |
+|水夏 ～SUIKA～全年齢版 | suika |
 |すくみず～フェチ☆になるもんっ！～|sukumizu|
 |ガッデーム＆ジュテーム|gadejude|
 |A.G.II.D.C.　～あるぴじ学園2.0　サーカス史上最大の危機！？～|ag2dc|
