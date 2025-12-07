@@ -45,7 +45,7 @@ namespace mes_text_tool
 		}
 	}
 
-	static auto get_view_from_arg(const std::wstring_view& arg, bool& log, const mes::script_info*& info, uint32_t& cdpg)
+	static auto get_value_from_arg(const std::wstring_view& arg, bool& log, const mes::script_info*& info, uint32_t& cdpg)
 	{
 		if (!arg.empty() && arg.starts_with(L"-"))
 		{
@@ -80,17 +80,17 @@ namespace mes_text_tool
 
 		if (arg1.count() > 0) 
 		{
-			get_view_from_arg(arg1.to_lower().view(), log, info, cdpg);
+			get_value_from_arg(arg1.to_lower().view(), log, info, cdpg);
 		}
 
 		if (arg2.count() > 0)
 		{
-			get_view_from_arg(arg2.to_lower().view(), log, info, cdpg);
+			get_value_from_arg(arg2.to_lower().view(), log, info, cdpg);
 		}
 
 		if (arg3.count() > 0)
 		{
-			get_view_from_arg(arg3.to_lower().view(), log, info, cdpg);
+			get_value_from_arg(arg3.to_lower().view(), log, info, cdpg);
 		}
 	}
 
