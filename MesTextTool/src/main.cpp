@@ -12,8 +12,8 @@ namespace mes_text_tool
 	inline static constexpr std::wstring_view information
 	{
 		L"----------------------------------------------------\n"
-		L" " PROJECT_NAME " v" PROJECT_VERSION " by iTsukezigen.\n"
-		L" GitHub: https://github.com/cokkeijigen/MesTextTool\n"
+		L"- " PROJECT_NAME " v" PROJECT_VERSION " by iTsukezigen.\n"
+		L"- GitHub: https://github.com/cokkeijigen/MesTextTool\n"
 	};
 
 	static auto get_value_from_exename(const wchar_t* args, bool& log, const mes::script_info*& info, uint32_t& cdpg) -> void
@@ -188,7 +188,7 @@ namespace mes_text_tool
 				xcsl::helper.writeline("[COMPLETE]\n");
 			}
 
-			logs.write(information).write_as_format(L" Time: %llfs\n", time);
+			logs.write(information).write_as_format(L"- Time: %llfs\n", time);
 			const auto file{ xfsys::create(output_path, L"output.log") };
 			file.write(logs.u8string(), xfsys::file::pos::begin);
 			file.close(), logs.clear();
@@ -197,7 +197,7 @@ namespace mes_text_tool
 		}
 
 		xcsl::helper.write(information);
-		xcsl::helper.write(L" Time: %llfs\n", time);
+		xcsl::helper.write(L"- Time: %llfs\n", time);
 		xcsl::helper.reset_attrs();
 		xcsl::helper.read_anykey();
 	}
