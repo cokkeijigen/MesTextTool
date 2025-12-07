@@ -16,34 +16,27 @@ namespace xstr {
 	class buffer<char> : public string_buffer
 	{
 	public:
-		string_buffer::string_buffer;
-	};
-
-	template<>
-	class buffer<unsigned char> : public string_buffer
-	{
-	public:
-		string_buffer::string_buffer;
-	};
-
-	template<>
-	class buffer<char8_t> : public string_buffer
-	{
-	public:
-		string_buffer::string_buffer;
-	};
-
-	template<>
-	class buffer<char16_t> : public wstring_buffer
-	{
-	public:
-		wstring_buffer::wstring_buffer;
+		using string_buffer::string_buffer;
 	};
 
 	template<>
 	class buffer<wchar_t> : public wstring_buffer
 	{
 	public:
-		wstring_buffer::wstring_buffer;
+		using wstring_buffer::wstring_buffer;
+	};
+
+	template<>
+	class buffer<char8_t> : public u8string_buffer
+	{
+	public:
+		using u8string_buffer::u8string_buffer;
+	};
+
+	template<>
+	class buffer<char16_t> : public u16string_buffer
+	{
+	public:
+		using u16string_buffer::u16string_buffer;
 	};
 }

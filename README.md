@@ -47,6 +47,7 @@ D:\YourGames\Name\Advdata\MES
 ***
 默认情况下，mes的文本是以`sjis(cp932)`来解析。
 如需指定编码，需要exe的重命名加上`-cp[xxxx]`，例如：
+
 ```
 MesTextTool-cp936.exe ; cp936 -> GBK编码
 ```
@@ -54,17 +55,33 @@ MesTextTool-cp936.exe ; cp936 -> GBK编码
 ```
 MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 ```
-| 游戏| 简称 | 
+| 游戏| 简称 |
 | :-----| :----: |
+|Aries Pure Dream|ariespd|
+|Aries Love Dream|ariesld|
+|終の館 ～恋文～|tyakata1|
+|終の館～双ツ星～|tyakata2|
+|終の館～罪と罰～|tyakata3|
+|終の館 ～檻姫～|tyakata4|
+|終の館 ～人形～|tyakata5|
+|水夏弐律 | suika2 |
+|水夏A.S+ ～アズプラス～ | suikaas+ |
+|水夏 ~SUIKAおー・157章~| suika |
+|水夏 ~SUIKA~全年齢版 | suika |
+|すくみず～フェチ☆になるもんっ！～|sukumizu|
+|ガッデーム＆ジュテーム|gadejude|
+|A.G.II.D.C.　～あるぴじ学園2.0　サーカス史上最大の危機！？～|ag2dc|
+|ホームメイド スイーツ| hmsw |
+|ホームメイド -Home maid-| homemaid |
 |ユニ uni.| uni |
 |Princess Party ～プリンセスパーティー～| puripa |
 |百花百狼/Hyakka Hyakurou|nightshade|
 |てんぷれ！|tmpl|
 |fortissimo//Akkord:Bsusvier | ffexa |
-|fortissimo EXS//Akkord:nächsten Phase | ffexs | 
-|D.S.i.F. -Dal Segno-| dsif | 
-|Eternal Fantasy | ef | 
-|D.S. -Dal Segno- | ds | 
+|fortissimo EXS//Akkord:nächsten Phase | ffexs |
+|D.S.i.F. -Dal Segno-| dsif |
+|Eternal Fantasy | ef |
+|D.S. -Dal Segno- | ds |
 |D.C.4 Plus Harmony 〜ダ・カーポ4〜 プラスハーモニー|dc4ph|
 |D.C.4 ～ダ・カーポ4～ | dc4|
 |D.C.III DreamDays|dc3dd|
@@ -77,16 +94,16 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 |D.C.II C.C. 月島小恋のらぶらぶバスルーム|dc2cckko|
 |D.C.II 〜featuring　Yun2〜|dc2fy|
 |D.C.II Dearest Marriage|dc2dm|
-|D.C.II 春風のアルティメットバトル！|dc2bs・dcbs|
+|D.C.II 春風のアルティメットバトル！|dc2bs, dcbs|
 |D.C.II Fall in Love|dc2fl|
 |D.C.A.S. 〜ダ・カーポ〜アフターシーズンズ|dcas|
 |D.C. Dream X’mas|dcdx|
-|D.C.〜ダ・カーポ〜　MEMORIES DISC|dcmems|
 |Ｄ．Ｃ．Ｐ．Ｃ．(Vista)|dcpc|
 |D.C. Summer Vacation|dcsv|
-|D.C.WhiteSeason|dcws|
+|D.C.WhiteSeason|dcws, dcws0|
 |ことり Love Ex P|ktlep|
-|D.C.〜ダ・カーポ〜　温泉編|dcos|
+|D.C.〜ダ・カーポ〜　温泉編|dcxx|
+|D.C.〜ダ・カーポ〜　MEMORIES DISC|dcxx, dcmems|
 
 ## 0x3 如何编译（Windows）
 **1.前提准备：**
@@ -95,6 +112,7 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 **2.使用 `git clone https://github.com/cokkeijigen/MesTextTool`获取源码，**
 **或者直接在`GitHub`上`Code > Download ZIP`下载ZIP并解压。**<br>
 **3.打开`cmd`或者`poweshell`, `cd`到源码路径，运行`build.bat`**
+
 ```sh
 git clone https://github.com/cokkeijigen/MesTextTool
 cd MesTextTool

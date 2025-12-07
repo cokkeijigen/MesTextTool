@@ -2,16 +2,17 @@
 #define _base_string_buffer_
 #include <vector>
 #include <ranges>
-#include <console.hpp>
 
-namespace utils::xstr {
+namespace utils::xstr 
+{
 
 	template <class T, class elem_t>
-	concept valid_iterator_t = requires(T it) {
+	concept valid_iterator_t = requires(T it) 
+	{
 		{ ++it } -> std::same_as<T&>;
 		{ it++ } -> std::convertible_to<T>;
 		{ it - it } -> std::convertible_to<size_t>;
-		typename std::enable_if<sizeof(decltype(*it)) == sizeof(elem_t), void>::type;
+		requires sizeof(decltype(*it)) == sizeof(elem_t);
 	};
 
 	template<class T, class elem_t, class object_t>
@@ -31,7 +32,8 @@ namespace utils::xstr {
 		static constexpr inline auto npos      { view_t::npos };
 		static constexpr inline auto unused    { static_cast<size_t>(-1) };
 
-		class iterator {
+		class iterator 
+		{
 			elem_t* m_Ptr;
 		public:
 			iterator(elem_t* ptr) : m_Ptr(ptr) {}
@@ -42,16 +44,16 @@ namespace utils::xstr {
 			iterator  operator-=(size_t n) { m_Ptr -= n; return *this; }
 			iterator  operator++(int) { iterator tmp = *this; ++m_Ptr; return tmp; }
 			iterator  operator--(int) { iterator tmp = *this; --m_Ptr; return tmp; }
-			iterator& operator+(size_t n) { return iterator(m_Ptr + n); }
-			iterator& operator-(size_t n) { return iterator(m_Ptr - n); }
+			iterator  operator+(size_t n) { return iterator(m_Ptr + n); }
+			iterator  operator-(size_t n) { return iterator(m_Ptr - n); }
 			bool operator==(const iterator& other) const { return m_Ptr == other.m_Ptr; }
 			bool operator!=(const iterator& other) const { return m_Ptr != other.m_Ptr; }
 		};
 
 	protected:
 
-		vector_t m_Buffer{};
-		size_t m_CharCount{};
+		mutable vector_t m_Buffer{};
+		mutable size_t m_CharCount{};
 
 		inline auto check(const size_t length) -> void;
 		
@@ -77,19 +79,21 @@ namespace utils::xstr {
 
 		auto write(elem_t elem) -> void;
 
-		auto data() -> elem_t*;
+		auto resize(size_t size) -> void;
 
-		auto view() const -> view_t;
+		auto data() const noexcept -> elem_t*;
 
-		auto count() const -> size_t;
+		auto view() const noexcept -> view_t;
 
-		auto size() const -> size_t;
+		auto count() const noexcept -> size_t;
+
+		auto size() const noexcept -> size_t;
 
 		auto reset() -> void;
 
 		auto clear() -> void;
 
-		auto recount() -> size_t;
+		auto recount(size_t count = unused) const noexcept -> size_t;
 
 		auto trim() -> void;
 
@@ -132,7 +136,7 @@ namespace utils::xstr {
 
 		auto ends_with(view_t str) -> bool;
 
-		auto substr(size_t offset, size_t count = unused) -> string_t;
+		auto substr(size_t offset, size_t count = unused) const noexcept -> view_t;
 
 		auto at(size_t index, bool begin = true) -> elem_t;
 
@@ -175,7 +179,7 @@ namespace utils::xstr {
 	{
 		if constexpr (sizeof(decltype(value)) == sizeof(elem_t))
 		{
-			return view_t{ &value, 1 };
+			return view_t{ reinterpret_cast<const elem_t*>(&value), 1 };
 		}
 		else if constexpr (std::convertible_to<decltype(value), view_t>)
 		{
@@ -213,13 +217,13 @@ namespace utils::xstr {
 			va_list args{ nullptr };
 			__crt_va_start(args, fmt);
 
-			auto&& c_fmt = static_cast<const char*>(fmt);
+			auto&& c_fmt  = reinterpret_cast<const char*>(fmt);
 			size_t length = std::vsnprintf(nullptr, 0, c_fmt, args);
 			this->check(length);
 
 			auto&& buffer = &this->m_Buffer[this->m_CharCount];
 			size_t size   = this->m_Buffer.size() - this->m_CharCount;
-			static_cast<void>(std::vsnprintf(buffer, size, c_fmt, args));
+			std::vsnprintf(reinterpret_cast<char*>(buffer), size, c_fmt, args);
 
 			this->m_CharCount = this->m_CharCount + length;
 			this->m_Buffer[this->m_CharCount] = empty[0];
@@ -231,20 +235,21 @@ namespace utils::xstr {
 			va_list args{ nullptr };
 			__crt_va_start(args, fmt);
 
-			auto&& c_fmt  = static_cast<const wchar_t*>(fmt);
+			auto&& c_fmt  = reinterpret_cast<const wchar_t*>(fmt);
 			size_t length = std::vswprintf(nullptr, 0, c_fmt, args);
 			this->check(length);
 
 			auto&& buffer = &this->m_Buffer[this->m_CharCount];
 			size_t size   = this->m_Buffer.size() - this->m_CharCount;
-			static_cast<void>(std::vswprintf(buffer, size, c_fmt, args));
+			std::vswprintf(reinterpret_cast<wchar_t*>(buffer), size, c_fmt, args);
 
 			this->m_CharCount = this->m_CharCount + length;
 			this->m_Buffer[this->m_CharCount] = empty[0];
 
 			__crt_va_end(args);
 		}
-		else {
+		else 
+		{
 			static_assert(false, "Format unsupported string element type.");
 		}
 
@@ -266,41 +271,62 @@ namespace utils::xstr {
 	}
 
 	template<class elem_t>
-	inline auto base_string_buffer<elem_t>::data() -> elem_t*
+	inline auto base_string_buffer<elem_t>::resize(size_t size) -> void
+	{
+		if (this->m_Buffer.size() != size + 1)
+		{
+			this->m_Buffer.resize(size + 1);
+			this->m_Buffer[size] = static_cast<elem_t>(0);
+			this->recount();
+		}
+	}
+
+	template<class elem_t>
+	inline auto base_string_buffer<elem_t>::data() const noexcept -> elem_t*
 	{
 		return this->m_Buffer.data();
 	}
 
 	template<class elem_t>
-	inline auto base_string_buffer<elem_t>::view() const -> view_t
+	inline auto base_string_buffer<elem_t>::view() const noexcept -> view_t
 	{
+		if (this->m_CharCount == 0) 
+		{
+			this->recount();
+		}
 		return view_t{ this->m_Buffer.data(), this->m_CharCount };
 	}
 
 	template<class elem_t>
-	auto base_string_buffer<elem_t>::recount() -> size_t
+	auto base_string_buffer<elem_t>::recount(const size_t count) const noexcept -> size_t
 	{
-		this->m_CharCount = 0;
-
-		if (this->m_Buffer.size() == 0)
+		if (count == unused)
 		{
-			return 0;
+			this->m_CharCount = 0;
+
+			if (this->m_Buffer.size() == 0)
+			{
+				return 0;
+			}
+
+			const view_t view(this->m_Buffer.data());
+			this->m_CharCount = view.size();
 		}
-
-		const view_t view(this->m_Buffer.data());
-		this->m_CharCount = view.size();
-
+		else if (this->m_Buffer.size() > count)
+		{
+			this->m_CharCount = count;
+		}
 		return this->m_CharCount;
 	}
 
 	template<class elem_t>
-	inline auto base_string_buffer<elem_t>::count() const -> size_t
+	inline auto base_string_buffer<elem_t>::count() const noexcept -> size_t
 	{
 		return this->m_CharCount;
 	}
 
 	template<class elem_t>
-	inline auto base_string_buffer<elem_t>::size() const -> size_t
+	inline auto base_string_buffer<elem_t>::size() const noexcept -> size_t
 	{
 		return this->m_Buffer.size();
 	}
@@ -542,7 +568,7 @@ namespace utils::xstr {
 		{
 			const size_t n_size{ (n_length - o_length) * finds.size() };
 			const size_t n_count{ this->m_CharCount + n_size };
-			if (n_count > this->m_Buffer.size())
+			if (n_count >= this->m_Buffer.size())
 			{
 				std::vector<elem_t> o_buffer{ std::move(this->m_Buffer) };
 				this->check(n_count);
@@ -701,11 +727,11 @@ namespace utils::xstr {
 	}
 
 	template<class elem_t>
-	auto base_string_buffer<elem_t>::substr(size_t offset, size_t count) -> string_t
+	auto base_string_buffer<elem_t>::substr(size_t offset, size_t count) const noexcept -> view_t
 	{
 		if (offset > this->m_CharCount)
 		{
-			return { empty[0] };
+			return view_t{};
 		}
 		
 		const elem_t* data = this->m_Buffer.data() + offset;
@@ -713,10 +739,10 @@ namespace utils::xstr {
 
 		if (count > free)
 		{
-			return string_t(data, free);
+			return view_t(data, free);
 		}
 		else {
-			return string_t(data, count);
+			return view_t(data, count);
 		}
 
 	}

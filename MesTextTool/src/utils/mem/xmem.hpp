@@ -1,6 +1,7 @@
 #pragma once
-#include <xmemory>
+#include <xmemory.hpp>
 
-namespace xmem {
+namespace xmem 
+{
 	using namespace utils::xmem;
 }

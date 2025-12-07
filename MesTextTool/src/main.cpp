@@ -1,118 +1,205 @@
-﻿#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
+#include <windows.h>
 #include <mes.hpp>
 #include <console.hpp>
-#include <utils.hpp>
-#include <xstr.hpp>
-#include <xmem.hpp>
-#include <file.hpp>
-#include <main.hpp>
+#include <scripts_handler.hpp>
 
-static auto run(int argc, const char** args) -> void
+console::helper xcsl::helper{ L"" PROJECT_NAME " v" PROJECT_VERSION };
+
+namespace mes_text_tool 
 {
-	try {
 
-		bool enable_log{ false };
+	inline static constexpr std::wstring_view information
+	{
+		L"----------------------------------------------------\n"
+		L" " PROJECT_NAME " v" PROJECT_VERSION " by: iTsukezigen.\n"
+		" GitHub: https://github.com/cokkeijigen/MesTextTool\n"
+	};
 
-		if (argc < 2)
+	static auto get_value_from_exename(const wchar_t* args, bool& log, const mes::script_info*& info, uint32_t& cdpg) -> void
+	{
+		xstr::wstring_buffer exename{ xfsys::path::name(args) };
+		const auto splits{ exename.to_lower().split_of(L'.', L'-', L'_') };
+
+		for (const auto& arg : std::ranges::reverse_view(splits)) 
 		{
-			throw std::exception
+			if (nullptr == info)
 			{
-				"[ILLEGAL PARAMETER] "
-				"At least 1 or 2 valid parameters are required.\n"
-				"Example: MesTextTool.exe [-LOG<optional>] "
-				"D:\\YourGames\\Name\\Advdata\\MES\n"
-			};
-		}
-		else if (argc == 3)
-		{
-			std::string_view arg{ args[1] };
-			enable_log = { "-log" == arg || "-LOG" == arg };
-		}
+				info = mes::script_info::query(xstr::cvt::to_utf8(arg));
+			}
 
-		auto input_info{ static_cast<const mes::script_info*>(nullptr) };
-		auto input_cdpg{ static_cast<uint32_t>(mes::multi_script_helper::defualt_code_page) };
-		auto input_path{ std::string_view{ argc == 3 ? args[2] : args[1] } };
-		auto self_path { std::string_view{ args[0] }};
-		auto work_path { std::string_view{ ".\\" }  };
-
-		size_t find_pos{ self_path.find_last_of("\\/") };
-		if (find_pos != std::string_view::npos)
-		{
-			work_path = self_path.substr(0, find_pos + 1);
-
-			utils::string::buffer exename{ self_path.substr(find_pos + 1) };
-			const auto splits{ exename.to_lower().split_of('.', '-', '_') };
-			for (const auto& arg : std::ranges::reverse_view(splits))
+			if (arg.starts_with(L"cp"))
 			{
-				if (nullptr == input_info)
-				{
-					input_info = mes::script_info::query(arg);
-				}
-
-				if (!arg.starts_with("cp"))
-				{
-					continue;
-				}
-
 				auto value{ xstr::to_integer<uint32_t>(arg.substr(2)) };
 				if (value.has_value())
 				{
-					input_cdpg = value.value();
-					if (input_info) { break; }
+					cdpg = value.value();
 				}
+				continue;
 			}
-		}
-
-		if (!enable_log)
-		{
-			xcsl::helper.writeline("[PROCESSING]...\n");
-		}
-
-		mes::multi_script_helper helper{ input_path, work_path, input_info, input_cdpg };
-		helper.run(
-			// on success callback
-			[&](std::string_view ipt, std::string_view opt) -> void
+			
+			if (arg == L"log")
 			{
-				if (enable_log) 
-				{
-					xcsl::helper.write("[SUCCESSFULLY] \n%s\n\n", opt.data());
-				}
-			},
-			// on failure callback
-			[&](std::string_view ipt) -> void
-			{
-				if (enable_log) 
-				{
-					xcsl::helper.set_attrs(console::attrs::text_dark_red);
-					xcsl::helper.write("[ERROR: %s]\n%s\n\n", helper.get_err_msg().data(), ipt.data());
-					xcsl::helper.reset_attrs();
-				}
+				log = true;
 			}
-		);
-
-		if (!enable_log)
-		{
-			//xcsl::helper.clear();
-			xcsl::helper.writeline("[COMPLETE]\n");
 		}
 	}
-	catch (const std::exception& err)
+
+	static auto get_view_from_arg(const std::wstring_view& arg, bool& log, const mes::script_info*& info, uint32_t& cdpg)
 	{
-		xcsl::helper.set_attrs(console::attrs::text_dark_red);
-		xcsl::helper.write("%s\n", err.what());
-		xcsl::helper.reset_attrs();
+		if (!arg.empty() && arg.starts_with(L"-"))
+		{
+			if (arg.starts_with(L"-cp"))
+			{
+				auto value{ xstr::to_integer<uint32_t>(arg.substr(3)) };
+				if (value.has_value())
+				{
+					cdpg = value.value();
+				}
+			}
+			else if(arg == L"-log")
+			{
+				log = true;
+			}
+			else
+			{
+				const auto _info{ mes::script_info::query(xstr::cvt::to_utf8(arg.substr(1))) };
+				if (_info != nullptr)
+				{
+					info = _info;
+				}
+			}
+		}
 	}
-}
 
-auto main(const int argc, const char** args) -> int 
-{
-	auto time { utils::time_counter<double>([&]() { run(argc, args); }) };
-	xcsl::helper.set_attrs(console::attrs::text_dark_yellow);
-	xcsl::helper.write("MesTextTool: Ver %s.\n", _tool_version_name_);
-	xcsl::helper.write("GitHub: https://github.com/cokkeijigen/MesTextTool\n");
-	xcsl::helper.write("Time: %llf\n", time);
-	xcsl::helper.reset_attrs();
-	xcsl::helper.read_anykey();
-	return { 0x114514 };
+	static auto get_value_from_argv(const int argc, wchar_t* const argv[], bool& log, const mes::script_info*& info, uint32_t& cdpg)
+	{
+		xstr::wstring_buffer arg1{ argc > 2 ? argv[1] : L"" };
+		xstr::wstring_buffer arg2{ argc > 3 ? argv[2] : L"" };
+		xstr::wstring_buffer arg3{ argc > 4 ? argv[3] : L"" };
+
+		if (arg1.count() > 0) 
+		{
+			get_view_from_arg(arg1.to_lower().view(), log, info, cdpg);
+		}
+
+		if (arg2.count() > 0)
+		{
+			get_view_from_arg(arg2.to_lower().view(), log, info, cdpg);
+		}
+
+		if (arg3.count() > 0)
+		{
+			get_view_from_arg(arg3.to_lower().view(), log, info, cdpg);
+		}
+	}
+
+	static auto main(const int argc, wchar_t* const argv[]) -> void
+	{
+
+		double time{};
+
+		if (argc < 2)
+		{
+			constexpr char message[]
+			{
+				"[ILLEGAL PARAMETER] "
+				"At least 1 or 2 valid parameters are required.\n"
+				"Args: -log<optional> -cp[codepage]<optional> -[game]<optional>\n"
+				"Example: MesTextTool.exe -log -cp932 -dc3wy "
+				"D:\\YourGames\\DC3WY\\Advdata\\MES\n"
+			};
+
+			xcsl::helper.set_attrs(console::attrs::text_dark_red);
+			xcsl::helper.writeline(message);
+			xcsl::helper.reset_attrs();
+
+		}
+		else 
+		{
+			bool enable_console_log{ false };
+			const mes::script_info* input_script_info{ nullptr };
+			uint32_t input_code_page{ mes::scripts::defualt_code_page };
+
+			get_value_from_exename(argv[0], enable_console_log, input_script_info, input_code_page);
+			get_value_from_argv(argc, argv, enable_console_log, input_script_info, input_code_page);
+
+			const std::wstring_view  input_path{ argv[argc - 1] };
+			const std::wstring_view output_path{ xfsys::path::parent(argv[0]) };
+
+			xstr::wstring_buffer logs{};
+			mes::scripts::handler handler{ input_path, output_path };
+
+			handler.set_script_info(input_script_info);
+			handler.set_mes_code_page(input_code_page);
+
+			if (!enable_console_log)
+			{
+				xcsl::helper.writeline("[PROCESSING]...\n");
+			}
+
+			time = handler.process(
+				[&](mes::scripts::handler::message_level level, std::wstring_view message) -> void
+				{
+					logs.write(message).write(L'\n');
+
+					if (!enable_console_log)
+					{
+						return;
+					}
+
+					switch (level)
+					{
+					case mes::scripts::handler::message_level::normal:
+					{
+						xcsl::helper.writeline(message);
+						return;
+					}
+					case mes::scripts::handler::message_level::warning:
+					{
+						xcsl::helper.set_attrs(xcsl::attrs::text_dark_yellow);
+						xcsl::helper.writeline(message);
+						xcsl::helper.reset_attrs();
+						return;
+					}
+					case mes::scripts::handler::message_level::error:
+					{
+						xcsl::helper.set_attrs(xcsl::attrs::text_dark_red);
+						xcsl::helper.writeline(message);
+						xcsl::helper.reset_attrs();
+						return;
+					}
+					};
+				}
+			);
+
+			if (!enable_console_log)
+			{
+				xcsl::helper.clear();
+				xcsl::helper.writeline("[COMPLETE]\n");
+			}
+
+			logs.write(information).write_as_format(L" Time: %llfs\n", time);
+			const auto file{ xfsys::create(output_path, L"output.log") };
+			file.write(logs.u8string(), xfsys::file::pos::begin);
+			file.close(), logs.clear();
+			
+			xcsl::helper.set_attrs(xcsl::attrs::text_dark_yellow);
+		}
+
+		xcsl::helper.write(information);
+		xcsl::helper.write(L" Time: %llfs\n", time);
+		xcsl::helper.reset_attrs();
+		xcsl::helper.read_anykey();
+	}
+
+	extern "C" auto main(void) -> int 
+	{
+		int argc{};
+		const auto cmds{ ::GetCommandLineW() };
+		const auto argv{ ::CommandLineToArgvW(cmds, &argc) };
+		mes_text_tool::main(argc, argv);
+
+		return { 0x114514 };
+	}
 }

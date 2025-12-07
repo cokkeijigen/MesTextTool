@@ -196,7 +196,7 @@ namespace console
 
 	auto console_helper::vf_write(const char8_t* fmt, va_list arg_list) const noexcept -> const console_helper&
 	{
-		return { this->set_cp(cdpg::utf_8).write(reinterpret_cast<const char*>(fmt), arg_list).reset_cp() };
+		return { this->set_cp(cdpg::utf_8).vf_write(reinterpret_cast<const char*>(fmt), arg_list).reset_cp() };
 	}
 
 	auto console_helper::vf_write(const char16_t* fmt, va_list arg_list) const noexcept -> const console_helper&

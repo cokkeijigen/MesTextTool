@@ -223,6 +223,7 @@ namespace console
 		auto write(std::u8string_view   content) const noexcept -> const console_helper&;
 		auto write(std::u16string_view  content) const noexcept -> const console_helper&;
 
+		inline auto write(uint32_t cdpg, const use_char_t auto* fmt, ...) const noexcept -> const console_helper&;
 		inline auto write(const use_char_t auto* fmt, ...) const noexcept -> const console_helper&;
 
 		auto writeline(std::wstring_view content) const noexcept -> const console_helper&;
@@ -486,13 +487,24 @@ namespace console
 		return out;
 	}
 	
+	inline auto console_helper::write(uint32_t cdpg, const use_char_t auto* fmt, ...) const noexcept -> const console_helper&
+	{
+		va_list arg_list{};
+		va_start(arg_list, fmt);
+		this->set_cp(cdpg);
+		this->vf_write(fmt, arg_list);
+		this->reset_cp();
+		va_end(arg_list);
+
+		return { *this };
+	}
+
 	inline auto console_helper::write(const use_char_t auto* fmt, ...) const noexcept -> const console_helper&
 	{
 		va_list arg_list{};
 		va_start(arg_list, fmt);
 		this->vf_write(fmt, arg_list);
 		va_end(arg_list);
-
 		return { *this };
 	}
 
@@ -624,3 +636,4 @@ namespace console::xcsl
 };
 
 namespace xcsl = console::xcsl;
+namespace xconsole = console::xcsl;

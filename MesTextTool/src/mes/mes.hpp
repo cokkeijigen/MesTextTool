@@ -1,21 +1,20 @@
 #pragma once
-#include <xmemory.hpp>
-#ifndef _FUNCTIONAL_
-#include <functional>
-#endif
+#include <span>
+#include <xmem.hpp>
+#include <xfsys.hpp>
 
-namespace mes {
-
+namespace mes 
+{
 	struct script_info 
 	{
-		struct section 
+		struct section
 		{
-			uint8_t beg{}, end{};
-			inline auto its(uint8_t key) const -> bool;
+			const uint8_t beg{}, end{};
+			auto its(const uint8_t key) const noexcept -> bool;
 		};
 
-		enum offset_t: uint8_t 
-		{ 
+		enum offset_t : uint8_t
+		{
 			offset1, // head[0] * 0x04 + 0x04
 			offset2  // head[0] * 0x06 + 0x04
 		};
@@ -30,12 +29,14 @@ namespace mes {
 		const section uint16x4; // [op: byte] [arg1: uint16] [arg2: uint16] [arg3: uint16] [arg4: uint16]
 		const uint8_t   enckey;
 		const std::initializer_list<uint8_t> opstrs; // the opcode for unencrypted strings in scene text
-		
+
 		static const script_info infos[];
-		static auto query(std::span<uint8_t> data) -> const script_info*;
-		static auto query(std::string_view name) -> const script_info*;
-		static auto query(uint16_t version) -> const script_info*;
-		auto operator =(const mes::script_info&) -> script_info&;
+
+		static auto query(const uint16_t version)        -> const script_info* const;
+		static auto query(const std::span<uint8_t> data) -> const script_info* const;
+		static auto query(const std::string_view name)   -> const script_info* const;
+		
+		auto operator=(const mes::script_info&) -> script_info&;
 
 		#pragma pack(push, 1)
 		struct uint8x2_t 
@@ -83,148 +84,191 @@ namespace mes {
 		#pragma pack(pop)
 	};
 
-	class script_view 
+	class script_view
 	{
-	
 	public:
-		struct token { int32_t offset{}, length{}; uint8_t value{}; };
-		template <class T> struct view { T* data{}; int32_t size{}, offset{}; };
+
+		struct token 
+		{
+			uint8_t  value{};
+			int32_t offset{}, length{};
+		};
+
+		template<class T>
+		class view_t :public std::span<T>
+		{
+			int32_t m_offset{};
+
+		public:
+			using std::span<T>::span;
+			using std::span<T>::operator=;
+
+			inline view_t(const std::span<T>& data, int32_t offset) noexcept :
+				std::span<T>::span{ data }, m_offset{offset}
+			{
+			}
+
+			inline view_t(view_t&& other) noexcept 
+			{
+				this->operator=(std::move(other));
+			}
+
+			inline auto operator=(view_t&& other) noexcept -> view_t&
+			{
+				if (this != &other)
+				{
+					std::span<T>::operator=(std::move(other));
+					this->m_offset = other.m_offset;
+				}
+				return *this;
+			}
+
+			inline auto offset() const noexcept -> int32_t
+			{
+				return this->m_offset;
+			}
+		};
 
 		script_view() = default;
-		script_view(std::span<uint8_t> raw, const script_info* info = nullptr);
-		script_view(std::span<uint8_t> raw, uint16_t version);
-		script_view(std::span<uint8_t> raw, const char* name);
 
-		auto info() const -> const script_info*;
-		auto raw () const -> view<uint8_t>;
-		auto asmbin () const -> view<uint8_t>;
-		auto labels () const -> view<int32_t>;
-		auto tokens () const -> const std::vector<token>&;
-		auto version() const -> uint16_t;
-	private:
-		const script_info* m_info{};
-		std::vector<token> m_tokens{};
-		view<int32_t> m_labels{};
-		view<uint8_t> m_asmbin{};
-		view<uint8_t> m_raw{};
-		uint16_t m_version{};
+		script_view(const std::span<uint8_t> raw, const script_info* const script_info = nullptr);
+		script_view(const std::span<uint8_t> raw, const std::string_view script_info_name);
+		script_view(const std::span<uint8_t> raw, const uint16_t script_info_version);
 
-		inline auto token_parse() -> void;
+		auto raw () const noexcept -> const view_t<uint8_t>&;
+		auto info() const noexcept -> const script_info* const;
+
+		auto asmbin () const noexcept -> const view_t<uint8_t>&;
+		auto labels () const noexcept -> const view_t<int32_t>&;
+		auto tokens () const noexcept -> const std::vector<token>&;
+		auto version() const noexcept -> uint16_t;
+
+	protected:
+		
+		mutable uint16_t m_version{};
+		mutable const script_info* m_info{};
+
+		mutable std::vector<token> m_tokens{};
+		mutable view_t<int32_t>    m_labels{};
+		mutable view_t<uint8_t>    m_asmbin{};
+		mutable view_t<uint8_t>    m_raw{};
+
+		auto init_by_offset1() noexcept -> void;
+		auto init_by_offset2() noexcept -> void;
+		auto token_parse() noexcept -> void;
 	};
 
-	class script_helper 
-	{
-
-	public:
-
-		struct text { int32_t offset{}; std::string string{}; };
-
-		script_helper();
-		~script_helper();
-		script_helper(std::string_view name);
-		script_helper(script_info* info);
-
-		auto is_parsed() -> bool;
-		auto read(std::string_view path, bool check = true) -> script_helper&;
-		auto set_info(const script_info* info) -> script_helper&;
-		auto fetch_scene_text(bool absolute_file_offset = true) const -> std::vector<text>;
-		auto import_scene_text(const std::vector<text>& texts, bool absolute_file_offset = true) -> bool;
-		auto import_scene_text(const std::vector<std::pair<int32_t, std::string>>& texts, bool absolute_file_offset = true) -> bool;
-		auto get_view() -> const script_view&;
-
-	private:
-		utils::xmem::buffer<uint8_t> m_buffer {};
-		const script_info*           m_info   {};
-		script_view                  m_mesview{};
-	};
-
-	class multi_script_helper 
+	class script_helper
 	{
 	public:
-		struct config 
+
+		union string_union_t
 		{
-			using vector_t = std::vector<std::pair<std::wstring, std::wstring>>;
+			inline ~string_union_t() noexcept
+			{
+				this->string.~basic_string();
+			}
 
-			inline static const constexpr char k_path[]{ "#InputPath"       };
-			inline static const constexpr char k_cdpg[]{ "#UseCodePage"     };
-			inline static const constexpr char k_tmin[]{ "#Text-MinLength"  };
-			inline static const constexpr char k_tmax[]{ "#Text-MaxLength"  };
-			inline static const constexpr char k_bfrp[]{ "#Before-Replaces" };
-			inline static const constexpr char k_atrp[]{ "#After-Replaces"  };
-			inline static const constexpr char k_name[]{ ".MesTextTool"     };
-			inline static const constexpr auto def_cdpg{ 936 };
-			inline static const constexpr auto def_tmin{ 22 };
-			inline static const constexpr auto def_tmax{ 24 };
-
-		public:
-			std::string path{};
-			int32_t cdpg{ def_cdpg };
-			int32_t tmin{ def_tmin };
-			int32_t tmax{ def_tmax };
-			vector_t bfrp{};
-			vector_t atrp{};
-
-			static auto read(std::string_view path) -> config;
-			static auto read(std::string_view path, config& result) -> void;
+			std::string string;
+			std::u8string u8string;
 		};
 
-		class text_formater
+		class text_pair_t
 		{
-			const config& m_config;
-			static auto is_first_char_forbidden(wchar_t chr) -> bool;
-			static auto is_last_char_forbidden (wchar_t chr) -> bool;
-			static auto is_talking(std::wstring_view str) -> bool;
-			static auto is_half_width(wchar_t wchar) -> bool;
+			int32_t m_offset;
+			uint8_t m_text[sizeof(string_union_t)]{};
 		public:
-			text_formater(const config& config);
-			auto format(std::string& text) -> void;
+			
+			struct proxy_type
+			{
+				int32_t offset;
+				string_union_t text;
+			};
+			
+			inline ~text_pair_t() noexcept
+			{
+				this->operator->()->text.string.~basic_string();
+			}
+
+			inline text_pair_t(text_pair_t&& other) noexcept 
+			{
+				this->operator->()->text.string = std::move(other.operator->()->text.string);
+				this->operator->()->offset = std::move(other.operator->()->offset);
+			}
+
+			inline text_pair_t(int32_t offset, std::string& text) noexcept : m_offset{ offset }
+			{
+				this->operator->()->text.string = std::move(text);
+			}
+
+			inline text_pair_t(int32_t offset, std::u8string& text) noexcept : m_offset{ offset }
+			{
+				this->operator->()->text.u8string = std::move(text);
+			}
+
+			inline auto operator->() noexcept -> proxy_type*
+			{
+				return reinterpret_cast<proxy_type*>(this);
+			}
+
+			inline auto operator->() const noexcept -> const proxy_type*
+			{
+				return reinterpret_cast<const proxy_type*>(this);
+			}
+
+			inline auto offset() const noexcept -> int32_t
+			{
+				return this->m_offset;
+			};
+
+			inline auto text() const noexcept -> const string_union_t&
+			{
+				return *reinterpret_cast<const string_union_t*>(&this->m_text);
+			}
 		};
 
-		static auto read_text(std::string_view path, std::vector<script_helper::text>& result) -> bool;
+		inline script_helper () noexcept {};
+		inline ~script_helper() noexcept {};
 
-		static inline constexpr auto defualt_code_page{ static_cast<uint32_t>(932) };
+		script_helper(const std::string_view   using_script_info_name) noexcept;
+		script_helper(const mes::script_info* const using_script_info) noexcept;
 
-		using success_call_t = std::function<void(std::string_view ipt, std::string_view opt)>;
-		using failure_call_t = std::function<void(std::string_view ipt)>;
-		using file_list_t    = std::vector<std::string>;
+		auto is_parsed() const noexcept -> bool;
+		auto script_view() const noexcept -> const mes::script_view&;
+		auto script_info() const noexcept -> const mes::script_info* const;
+		auto using_script_info(const mes::script_info* const info) noexcept -> script_helper&;
 
-	private:
-
-		script_helper m_helper {};
-		std::string   m_iptdir {};
-		std::string   m_optdir {};
-		uint32_t      m_iptcdpg{};
-
-		file_list_t    m_filelist {};
-		success_call_t m_onsuccess{};
-		failure_call_t m_onfailure{};
-
-		std::string m_configfile{};
-		std::string m_error_message{};
+		auto load(const xfsys::file& file) noexcept -> script_helper&;
+		auto load(const std::wstring_view  path, const bool check = true) noexcept -> script_helper&;
+		auto load(const std::u8string_view path, const bool check = true) noexcept -> script_helper&;
 		
-		auto export_all_text() -> void;
-		auto import_all_text() -> void;
+		auto load(const std::wstring_view  directory, const std::wstring_view  name) noexcept -> script_helper&;
+		auto load(const std::u8string_view directory, const std::u8string_view name) noexcept -> script_helper&;
 
-		auto make_config_file(const std::string& opt_dir) -> void;
+		auto save(const xfsys::file& file) noexcept -> bool;
+		auto save(const std::wstring_view  path) noexcept -> bool;
+		auto save(const std::u8string_view path) noexcept -> bool;
 
-		inline auto on_failure(std::string_view msg, std::string_view ipt) -> void 
-		{
-			this->m_error_message.assign(msg);
-			if (this->m_onfailure) { this->m_onfailure(ipt); }
-		}
+		auto save(const std::wstring_view  directory, const std::wstring_view  name) noexcept -> bool;
+		auto save(const std::u8string_view directory, const std::u8string_view name) noexcept -> bool;
+
+		auto export_text(const bool absolute_file_offset = true) const noexcept -> std::vector<text_pair_t>;
+		auto import_text(const std::vector<text_pair_t>& texts, bool absolute_file_offset = true) noexcept -> bool;
+
+
+	protected:
 		
-		inline auto on_success(std::string_view ipt, std::string_view opt) -> void 
-		{
-			if (this->m_onsuccess) { this->m_onsuccess(ipt, opt); };
-		}
-
-	public:
-
-		multi_script_helper(std::string_view ipt_dir_or_file, std::string_view opt_dir, const script_info* info = {}, uint32_t ipt_cdpg = { defualt_code_page });
-		
-		auto get_err_msg() const  -> const std::string&;
-		auto set_iptcdpg(int32_t cdpg)  -> multi_script_helper&;
-		auto run(success_call_t onSuccess = {}, failure_call_t onFailure = {}, bool _noexcept = {false}) -> multi_script_helper&;
+		const  mes::script_info* m_script_info{};
+		mutable mes::script_view m_script_view{};
+		mutable xmem::buffer<uint8_t> m_buffer{};
 	};
 
+	namespace script 
+	{
+		using info = script_info;
+		using view = script_view;
+		using helper = script_helper;
+		using text_pair_t    = script_helper::text_pair_t;
+		using string_union_t = script_helper::string_union_t;
+	}
 }

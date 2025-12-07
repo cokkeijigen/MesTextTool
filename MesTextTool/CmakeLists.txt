@@ -1,19 +1,15 @@
 cmake_minimum_required(VERSION 3.20.0)
-project(MesTextTool)
+project(MesTextTool VERSION 1.3.4)
 
 set(CMAKE_CXX_STANDARD 23)
-add_compile_options("/source-charset:utf-8")
-
 set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/src")
-file(GLOB_RECURSE SOURCES "${SOURCE_DIR}/*.cpp")
 
-add_executable(MesTextTool ${SOURCES})
-include_directories(${SOURCE_DIR})
+add_compile_options("/source-charset:utf-8")
+add_subdirectory("${SOURCE_DIR}/utils")
+add_subdirectory("${SOURCE_DIR}/mes")
 
-file(GLOB HEADER_DIR ALL_FILES_AND_DIRS 
-    "${SOURCE_DIR}/*" 
-    "${SOURCE_DIR}/*/*"
-)
-list(FILTER HEADER_DIR EXCLUDE REGEX ".*\\..*")
-target_include_directories(MesTextTool PUBLIC ${HEADER_DIR})
-set_target_properties(MesTextTool PROPERTIES LINK_FLAGS "/MANIFEST:NO")
+add_definitions("-DPROJECT_NAME=\"${PROJECT_NAME}\"")
+add_definitions("-DPROJECT_VERSION=\"${PROJECT_VERSION}\"")
+
+add_executable(${PROJECT_NAME} "${SOURCE_DIR}/main.cpp")
+target_link_libraries(${PROJECT_NAME} utils mes)

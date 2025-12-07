@@ -1,0 +1,15 @@
+project(mes)
+
+add_library(${PROJECT_NAME} OBJECT 
+    "config.cpp"
+    "script_info.cpp"
+    "script_view.cpp"
+    "script_helper.cpp"
+    "script_text.cpp"
+    "scripts_handler.cpp"
+)
+
+target_include_directories(${PROJECT_NAME} PUBLIC  
+    "${CMAKE_CURRENT_LIST_DIR}"
+)
+target_link_libraries(${PROJECT_NAME} utils)
