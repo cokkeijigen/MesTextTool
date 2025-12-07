@@ -45,10 +45,19 @@ namespace mes_text_tool
 		}
 	}
 
-	static auto get_value_from_arg(const std::wstring_view& arg, bool& log, const mes::script_info*& info, uint32_t& cdpg)
+	static auto get_value_from_arg(std::wstring_view& arg, bool& log, const mes::script_info*& info, uint32_t& cdpg)
 	{
-		if (!arg.empty() && arg.starts_with(L"-"))
+		if (!arg.empty() && arg.front() == L'-')
 		{
+			auto data{ const_cast<wchar_t*>(arg.data()) };
+
+			std::transform(data, data + arg.size(), data,
+				[](char v) -> char
+				{
+					return static_cast<char>(std::tolower(v));
+				}
+			);
+
 			if (arg.starts_with(L"-cp"))
 			{
 				auto value{ xstr::to_integer<uint32_t>(arg.substr(3)) };
@@ -74,23 +83,23 @@ namespace mes_text_tool
 
 	static auto get_value_from_argv(const int argc, wchar_t* const argv[], bool& log, const mes::script_info*& info, uint32_t& cdpg)
 	{
-		xstr::wstring_buffer arg1{ argc > 2 ? argv[1] : L"" };
-		xstr::wstring_buffer arg2{ argc > 3 ? argv[2] : L"" };
-		xstr::wstring_buffer arg3{ argc > 4 ? argv[3] : L"" };
+		std::wstring_view arg1{ argc > 2 ? argv[1] : L"" };
+		std::wstring_view arg2{ argc > 3 ? argv[2] : L"" };
+		std::wstring_view arg3{ argc > 4 ? argv[3] : L"" };
 
-		if (arg1.count() > 0) 
+		if (!arg1.empty()) 
 		{
-			get_value_from_arg(arg1.to_lower().view(), log, info, cdpg);
+			get_value_from_arg(arg1, log, info, cdpg);
 		}
 
-		if (arg2.count() > 0)
+		if (!arg2.empty())
 		{
-			get_value_from_arg(arg2.to_lower().view(), log, info, cdpg);
+			get_value_from_arg(arg2, log, info, cdpg);
 		}
 
-		if (arg3.count() > 0)
+		if (!arg3.empty())
 		{
-			get_value_from_arg(arg3.to_lower().view(), log, info, cdpg);
+			get_value_from_arg(arg3, log, info, cdpg);
 		}
 	}
 
