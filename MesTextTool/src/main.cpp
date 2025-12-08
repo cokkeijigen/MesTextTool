@@ -50,7 +50,7 @@ namespace mes_text_tool
 		if (!arg.empty() && arg.front() == L'-')
 		{
 			auto data{ const_cast<wchar_t*>(arg.data()) };
-
+			
 			std::transform(data, data + arg.size(), data,
 				[](char v) -> char
 				{
@@ -162,24 +162,24 @@ namespace mes_text_tool
 					case mes::scripts::handler::message_level::normal:
 					{
 						xcsl::helper.writeline(message);
-						return;
+						break;
 					}
 					case mes::scripts::handler::message_level::warning:
 					{
 						xcsl::helper.set_attrs(xcsl::attrs::text_dark_yellow);
 						xcsl::helper.writeline(message);
-						xcsl::helper.reset_attrs();
-						return;
+						break;
 					}
 					case mes::scripts::handler::message_level::error:
 					{
 						xcsl::helper.set_attrs(xcsl::attrs::text_dark_red);
 						xcsl::helper.writeline(message);
-						xcsl::helper.reset_attrs();
-						return;
+						break;
 					}
 					};
+					xcsl::helper.reset_attrs();
 				}
+
 			);
 
 			if (!enable_console_log)
