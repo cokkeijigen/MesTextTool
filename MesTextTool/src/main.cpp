@@ -52,9 +52,9 @@ namespace mes_text_tool
 			auto data{ const_cast<wchar_t*>(arg.data()) };
 			
 			std::transform(data, data + arg.size(), data,
-				[](char v) -> char
+				[](wchar_t v) -> wchar_t
 				{
-					return static_cast<char>(std::tolower(v));
+					return static_cast<wchar_t>(std::tolower(v));
 				}
 			);
 
