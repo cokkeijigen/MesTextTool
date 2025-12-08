@@ -76,7 +76,8 @@ namespace mes_text_tool
 			}
 			else
 			{
-				const auto _info{ mes::script_info::query(xstr::cvt::to_utf8(arg.substr(1))) };
+				const auto __arg{ xstr::cvt::to_utf8(arg.substr(1)) };
+				const auto _info{ mes::script_info::query(__arg) };
 				if (_info != nullptr)
 				{
 					info = _info;
