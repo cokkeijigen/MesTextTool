@@ -248,18 +248,9 @@ namespace xfsys
 
 	namespace path 
 	{
-		template<class T>
-		concept convertible_to_string_view_t =
-			std::convertible_to<T, std::string_view>  || std::convertible_to<T, std::u8string_view> ||
-			std::convertible_to<T, std::wstring_view> || std::convertible_to<T, std::u16string_view>;
-
-		template<class ...T>
-		concept all_convertible_to_string_view_t =
-			(std::convertible_to<T, std::string_view> && ...)   || (std::convertible_to<T, std::wstring_view> && ...) ||
-			(std::convertible_to<T, std::u8string_view> && ...) || (std::convertible_to<T, std::u16string_view> && ...);
 
 		template<class ...T, class char_t = decltype(std::declval<std::tuple_element_t<0, std::tuple<T...>>>()[0])>
-		requires all_convertible_to_string_view_t<T...>
+		requires (std::convertible_to<T, std::basic_string_view<std::decay_t<char_t>>> && ...)
 		inline auto join(T&& ... args) -> std::basic_string<std::decay_t<char_t>>
 		{
 			constexpr const std::decay_t<char_t> WHITESPACE[7]
@@ -319,11 +310,11 @@ namespace xfsys
 					buffer.append_range(path);
 				}
 			}
-			return std::basic_string<std::decay_t<char_t>>{ buffer.data(), buffer.size() };
+			return std::basic_string<std::decay_t<char_t>>{ std::move(buffer.data()), buffer.size() };
 		}
 
 		template<class ...T, class char_t = decltype(std::declval<std::tuple_element_t<0, std::tuple<T...>>>()[0])>
-			requires all_convertible_to_string_view_t<T...>
+		requires (std::convertible_to<T, std::basic_string_view<std::decay_t<char_t>>> && ...)
 		inline auto join_std(T&& ... args) -> std::basic_string<std::decay_t<char_t>>
 		{
 			constexpr const std::decay_t<char_t> WHITESPACE[7]
@@ -385,7 +376,7 @@ namespace xfsys
 					}
 				} while (true);
 			}
-			return std::basic_string<std::decay_t<char_t>>{ std::move(buffer.data()), buffer.size() };
+			return std::basic_string<std::decay_t<char_t>>{ buffer.data(), buffer.size() };
 		}
 
 		inline auto parent(const std::string_view path) -> std::string_view
