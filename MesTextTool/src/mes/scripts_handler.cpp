@@ -185,6 +185,16 @@ namespace mes::scripts
 			input_path = xfsys::path::parent(this->m_input_directory_or_file);
 			this->export_text(this->m_input_directory_or_file, output_script_infos);
 		}
+		else 
+		{
+			if (this->m_logger)
+			{
+				constexpr wchar_t info[]{ L"Error! input path does not exists:\n- " };
+				const auto message{ xstr::join(info, this->m_input_directory_or_file, L"\n") };
+				this->m_logger(message_level::error, message);
+			}
+			return;
+		}
 
 		if (output_script_infos.empty())
 		{
