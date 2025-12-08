@@ -44,13 +44,17 @@ namespace mes_text_tool
 			}
 		}
 	}
-
-	static auto get_value_from_arg(std::wstring_view& arg, bool& log, const mes::script_info*& info, uint32_t& cdpg)
+	static auto get_value_from_argv(const int argc, wchar_t* const argv[], bool& log, const mes::script_info*& info, uint32_t& cdpg)
 	{
-		if (!arg.empty() && arg.front() == L'-')
+		for (size_t i = 1; i < argc - 1; i++)
 		{
+			std::wstring_view arg{ argv[i] };
+			if (arg.empty())
+			{
+				continue;
+			}
+
 			auto data{ const_cast<wchar_t*>(arg.data()) };
-			
 			std::transform(data, data + arg.size(), data,
 				[](wchar_t v) -> wchar_t
 				{
@@ -66,7 +70,7 @@ namespace mes_text_tool
 					cdpg = value.value();
 				}
 			}
-			else if(arg == L"-log")
+			else if (arg == L"-log")
 			{
 				log = true;
 			}
@@ -78,28 +82,6 @@ namespace mes_text_tool
 					info = _info;
 				}
 			}
-		}
-	}
-
-	static auto get_value_from_argv(const int argc, wchar_t* const argv[], bool& log, const mes::script_info*& info, uint32_t& cdpg)
-	{
-		std::wstring_view arg1{ argc > 2 ? argv[1] : L"" };
-		std::wstring_view arg2{ argc > 3 ? argv[2] : L"" };
-		std::wstring_view arg3{ argc > 4 ? argv[3] : L"" };
-
-		if (!arg1.empty()) 
-		{
-			get_value_from_arg(arg1, log, info, cdpg);
-		}
-
-		if (!arg2.empty())
-		{
-			get_value_from_arg(arg2, log, info, cdpg);
-		}
-
-		if (!arg3.empty())
-		{
-			get_value_from_arg(arg3, log, info, cdpg);
 		}
 	}
 
