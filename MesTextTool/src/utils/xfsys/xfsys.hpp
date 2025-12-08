@@ -319,7 +319,7 @@ namespace xfsys
 					buffer.append_range(path);
 				}
 			}
-			return std::basic_string<std::decay_t<char_t>>{ std::move(buffer.data()), buffer.size() };
+			return std::basic_string<std::decay_t<char_t>>{ buffer.data(), buffer.size() };
 		}
 
 		template<class ...T, class char_t = decltype(std::declval<std::tuple_element_t<0, std::tuple<T...>>>()[0])>
