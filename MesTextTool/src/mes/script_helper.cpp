@@ -208,10 +208,10 @@ namespace mes
 
 		for (const script_view::token& token : this->m_script_view.tokens())
 		{
-			if (info->string.its(token.value))
+			/*if (info->string.its(token.value))
 			{
 				_log_text__({ reinterpret_cast<char*>(asmbin.data() + token.offset + 1) }, int(token.value), xcsl::cdpg::sjis);
-			}
+			}*/
 
 			if (info->encstr.its(token.value))
 			{
