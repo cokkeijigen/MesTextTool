@@ -178,10 +178,15 @@ namespace xfsys
 			OPEN_ALWAYS : OPEN_EXISTING
 		};
 
-		const std::string target_path{ path };
+		std::string target_path{ path };
 		if (target_path.empty())
 		{
 			return xfsys::file{ nullptr };
+		}
+
+		if (target_path.size() > MAX_PATH && !target_path.starts_with("\\\\?\\"))
+		{
+			target_path.insert(0, "\\\\?\\");
 		}
 
 		auto create_file_handle
@@ -209,10 +214,15 @@ namespace xfsys
 			OPEN_ALWAYS : OPEN_EXISTING
 		};
 
-		const std::wstring target_path{ path };
+		std::wstring target_path{ path };
 		if (target_path.empty())
 		{
 			return xfsys::file{ nullptr };
+		}
+
+		if (target_path.size() > MAX_PATH && !target_path.starts_with(L"\\\\?\\"))
+		{
+			target_path.insert(0, L"\\\\?\\");
 		}
 
 		auto create_file_handle
@@ -284,10 +294,15 @@ namespace xfsys
 
 	auto create(const std::string_view path) -> xfsys::file
 	{
-		const std::string target_path{ path };
+		std::string target_path{ path };
 		if (target_path.empty())
 		{
 			return xfsys::file{ nullptr };
+		}
+
+		if (target_path.size() > MAX_PATH && !target_path.starts_with("\\\\?\\"))
+		{
+			target_path.insert(0, "\\\\?\\");
 		}
 
 		auto create_file_handle
@@ -304,10 +319,15 @@ namespace xfsys
 
 	auto create(const std::wstring_view path) -> xfsys::file
 	{
-		const std::wstring target_path{ path };
+		std::wstring target_path{ path };
 		if (target_path.empty())
 		{
 			return xfsys::file{ nullptr };
+		}
+
+		if (target_path.size() > MAX_PATH && !target_path.starts_with(L"\\\\?\\"))
+		{
+			target_path.insert(0, L"\\\\?\\");
 		}
 
 		auto create_file_handle
