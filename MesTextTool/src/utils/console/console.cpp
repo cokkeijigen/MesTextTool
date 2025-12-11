@@ -124,7 +124,6 @@ namespace console
 
 	auto console_helper::write(std::wstring_view content) const noexcept -> const console_helper&
 	{
-
 		if (this->m_Output != nullptr && !content.empty())
 		{
 			::WriteConsoleW(this->m_Output, content.data(), content.size(), NULL, NULL);
