@@ -3,24 +3,24 @@ project(MesTextTool VERSION 1.3.5)
 
 set(CMAKE_CXX_STANDARD 23)
 set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/src")
+set(CMAKE_CXX_FLAGS_RELEASE "/O1 /Ob2 /DNDEBUG")
 
-add_compile_options("/source-charset:utf-8")
+add_compile_options(
+    "/source-charset:utf-8"
+    "$<$<CONFIG:Release>:/GF>"
+    "$<$<CONFIG:Release>:/Oy>"
+    "$<$<CONFIG:Release>:/GL>"
+    "$<$<CONFIG:Release>:/GS->"
+)
+
 add_subdirectory("${SOURCE_DIR}/utils")
 add_subdirectory("${SOURCE_DIR}/mes")
 
 add_definitions("-DPROJECT_NAME=\"${PROJECT_NAME}\"")
 add_definitions("-DPROJECT_VERSION=\"${PROJECT_VERSION}\"")
 
-string(REPLACE "/O2" "/O1" CMAKE_CXX_FLAGS_RELEASE 
-	"${CMAKE_CXX_FLAGS_RELEASE}"
-)
-
 add_executable(${PROJECT_NAME} "${SOURCE_DIR}/main.cpp")
-target_link_libraries (${PROJECT_NAME} utils mes)
-
-target_compile_options(${PROJECT_NAME} PRIVATE 
-	"/GF" "/Oy" "/GL" "/GS-"
-)
-set_target_properties (${PROJECT_NAME} PROPERTIES
+target_link_libraries(${PROJECT_NAME} utils mes)
+set_target_properties(${PROJECT_NAME} PROPERTIES
 	LINK_FLAGS "/DYNAMICBASE:NO /MANIFEST:NO"
 )
