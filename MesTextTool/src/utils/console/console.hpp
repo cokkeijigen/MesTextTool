@@ -636,4 +636,3 @@ namespace console::xcsl
 };
 
 namespace xcsl = console::xcsl;
-namespace xconsole = console::xcsl;
