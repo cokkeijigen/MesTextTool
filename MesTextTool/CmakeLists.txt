@@ -11,5 +11,16 @@ add_subdirectory("${SOURCE_DIR}/mes")
 add_definitions("-DPROJECT_NAME=\"${PROJECT_NAME}\"")
 add_definitions("-DPROJECT_VERSION=\"${PROJECT_VERSION}\"")
 
+string(REPLACE "/O2" "/O1" CMAKE_CXX_FLAGS_RELEASE 
+	"${CMAKE_CXX_FLAGS_RELEASE}"
+)
+
 add_executable(${PROJECT_NAME} "${SOURCE_DIR}/main.cpp")
-target_link_libraries(${PROJECT_NAME} utils mes)
+target_link_libraries (${PROJECT_NAME} utils mes)
+
+target_compile_options(${PROJECT_NAME} PRIVATE 
+	"/GF" "/Oy" "/GL" "/GS-"
+)
+set_target_properties (${PROJECT_NAME} PROPERTIES
+	LINK_FLAGS "/DYNAMICBASE:NO /MANIFEST:NO"
+)
