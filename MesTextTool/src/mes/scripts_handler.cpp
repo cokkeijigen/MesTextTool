@@ -185,16 +185,6 @@ namespace mes::scripts
 			input_path = xfsys::path::parent(this->m_input_directory_or_file);
 			this->export_text(this->m_input_directory_or_file, output_script_infos);
 		}
-		else 
-		{
-			if (this->m_logger)
-			{
-				constexpr wchar_t info[]{ L"Error! input path does not exists:\n- " };
-				const auto message{ xstr::join(info, this->m_input_directory_or_file, L"\n") };
-				this->m_logger(message_level::error, message);
-			}
-			return;
-		}
 
 		if (output_script_infos.empty())
 		{
@@ -389,7 +379,7 @@ namespace mes::scripts
 
 			this->import_text_handle();
 		}
-		else 
+		else if(xfsys::is_file(this->m_input_directory_or_file))
 		{
 			if (this->m_logger)
 			{
@@ -397,6 +387,12 @@ namespace mes::scripts
 			}
 
 			this->export_text_handle();
+		}
+		else if (this->m_logger)
+		{
+			constexpr wchar_t info[]{ L"Error! input path does not exists:\n- " };
+			const auto message{ xstr::join(info, this->m_input_directory_or_file, L"\n") };
+			this->m_logger(message_level::error, message);
 		}
 		
 		const auto end{ std::chrono::high_resolution_clock::now() };
