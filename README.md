@@ -118,4 +118,4 @@ git clone https://github.com/cokkeijigen/MesTextTool
 cd MesTextTool
 build.bat
 ```
-**4.运行完`build.bat`，输出exe的路径为源码目录下`.\output\Release\MesTextTool.exe`**
+**4.运行完`build.bat`，输出exe的路径为源码目录下`.\build\Release\MesTextTool.exe`**
