@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include <string>
 #include "console.hpp"
 
@@ -167,12 +168,12 @@ namespace console
 			return { *this };
 		}
 
-		auto size{ std::vsnprintf(nullptr, 0, fmt, arg_list) };
+		const auto size{ std::vsnprintf(nullptr, 0, fmt, arg_list) };
 		if (size > 0)
 		{
-			auto buffer{ std::string(size + 1, 0) };
-			std::vsnprintf(buffer.data(), buffer.size(), fmt, arg_list);
-			this->write(buffer);
+			auto buffer = std::string(size + 1, '\0');
+			std::vsnprintf(buffer.data(), buffer.size() + 1, fmt, arg_list);
+			this->write(std::string_view{ buffer.data(), static_cast<size_t>(size) });
 		}
 		return { *this };
 	}
@@ -183,13 +184,13 @@ namespace console
 		{
 			return { *this };
 		}
-
-		auto size{ std::vswprintf(nullptr, 0, fmt, arg_list) };
+		
+		const auto size{ std::vswprintf(nullptr, 0, fmt, arg_list) };
 		if (size > 0)
 		{
-			auto buffer{ std::wstring(size + 1, 0) };
-			std::vswprintf(buffer.data(), buffer.size(), fmt, arg_list);
-			this->write(buffer);
+			auto buffer = std::vector<wchar_t>(size + 1, L'\0');
+			std::vswprintf(buffer.data(), buffer.size() + 1, fmt, arg_list);
+			this->write(std::wstring_view{ buffer.data(), static_cast<size_t>(size) });
 		}
 		return { *this };
 	}
