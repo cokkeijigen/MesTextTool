@@ -379,7 +379,7 @@ namespace mes::scripts
 
 			this->import_text_handle();
 		}
-		else if(xfsys::is_file(this->m_input_directory_or_file))
+		else if(xfsys::is_exists(this->m_input_directory_or_file))
 		{
 			if (this->m_logger)
 			{
