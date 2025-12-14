@@ -162,7 +162,6 @@ namespace mes_text_tool
 					};
 					xcsl::helper.reset_attrs();
 				}
-
 			);
 
 			if (!enable_console_log)
