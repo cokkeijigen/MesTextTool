@@ -397,7 +397,7 @@ namespace mes::scripts
 		
 		const auto end{ std::chrono::high_resolution_clock::now() };
 		const auto dur{ std::chrono::duration_cast<std::chrono::microseconds>(end - beg) };
-		return std::chrono::duration_cast<std::chrono::duration<double>>(dur).count();
+		return std::chrono::duration_cast<std::chrono::duration<time_t>>(dur).count();
 	}
 
 	auto scripts_handler::process(logger_t logger) const -> time_t
