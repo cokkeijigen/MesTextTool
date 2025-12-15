@@ -4,43 +4,16 @@
 #include "config.hpp"
 namespace mes
 {
-	static auto path_join(const std::string_view directory, const std::string_view file) -> std::string
-	{
-		std::string path{};
-		if (directory.ends_with("/") || directory.ends_with("\\"))
-		{
-			path = std::move(std::string{ directory }.append(file));
-		}
-		else
-		{
-			path = std::move(std::string{ directory }.append("\\").append(file));
-		}
-		return path;
-	}
-	static auto path_join(const std::wstring_view directory, const std::wstring_view file) -> std::wstring
-	{
-		std::wstring path{};
-		if (directory.ends_with(L"/") || directory.ends_with(L"\\"))
-		{
-			path = std::move(std::wstring{ directory }.append(file));
-		}
-		else
-		{
-			path = std::move(std::wstring{ directory }.append(L"\\").append(file));
-		}
-		return path;
-	}
-
 	auto config::config_file_exists(const std::string_view directory) -> bool
 	{
-		const auto path{ path_join(directory, xstr::cvt::to_utf8(config::k_name)) };
+		const auto path{ xfsys::path::join(directory, xstr::cvt::to_utf8(config::k_name)) };
 		const auto attr{ ::GetFileAttributesA(path.data()) };
 		return { INVALID_FILE_ATTRIBUTES != attr };
 	}
 
 	auto config::config_file_exists(const std::wstring_view directory) -> bool
 	{
-		const auto path{ path_join(directory, config::k_name) };
+		const auto path{ xfsys::path::join(directory, config::k_name) };
 		const auto attr{ ::GetFileAttributesW(path.data()) };
 		return { INVALID_FILE_ATTRIBUTES != attr };
 	}
@@ -233,7 +206,7 @@ namespace mes
 			return false;
 		}
 
-		const auto path{ path_join(directory, xstr::cvt::to_utf8(config::k_name)) };
+		const auto path{ xfsys::path::join(directory, xstr::cvt::to_utf8(config::k_name)) };
 		return config::read(xfsys::open(path, xfsys::read, false), result);
 	}
 
@@ -244,7 +217,7 @@ namespace mes
 			return false;
 		}
 
-		const auto path{ path_join(directory, config::k_name) };
+		const auto path{ xfsys::path::join(directory, config::k_name) };
 		return config::read(xfsys::open(path, xfsys::read, false), result);
 	}
 
@@ -287,7 +260,7 @@ namespace mes
 			return false;
 		}
 
-		const auto path{ path_join(directory, xstr::cvt::to_utf8(config::k_name)) };
+		const auto path{ xfsys::path::join(directory, xstr::cvt::to_utf8(config::k_name)) };
 		return config::create(xfsys::create(path), config);
 	}
 
@@ -298,7 +271,7 @@ namespace mes
 			return false;
 		}
 		
-		const auto path{ path_join(directory, config::k_name) };
+		const auto path{ xfsys::path::join(directory, config::k_name) };
 		return config::create(xfsys::create(path), config);
 	}
 }
