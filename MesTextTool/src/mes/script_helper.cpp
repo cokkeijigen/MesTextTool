@@ -192,7 +192,7 @@ namespace mes
 		{
 			if (static_cast<uint16_t>(achar) >= 125)
 			{
-				xcsl::helper.write(L"[0x%02X]%ls\n", opcode, wstr.data());
+				xcout::helper.write(L"[0x%02X]%ls\n", opcode, wstr.data());
 				break;
 			}
 		}

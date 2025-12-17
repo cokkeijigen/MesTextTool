@@ -163,7 +163,7 @@ namespace console
 		gbk        = 0x03A8u,
 	};
 
-	namespace xcsl
+	namespace xout
 	{
 		struct _out;
 	}
@@ -285,7 +285,7 @@ namespace console
 
 	class console_streambuf : public std::streambuf 
 	{
-		friend xcsl::_out;
+		friend xout::_out;
 		friend console_ostream;
 		static inline constexpr size_t buffer_size = 512;
 
@@ -336,7 +336,7 @@ namespace console
 
 	class console_ostream : public std::ostream 
 	{
-		friend xcsl::_out;
+		friend xout::_out;
 		console_streambuf streambuf;
 		const console_helper& helper;
 
@@ -523,7 +523,7 @@ namespace console
 	}
 }
 
-namespace console::xcsl
+namespace console::xout
 {
 	extern console::console_helper helper;
 	using color = console::attrs::color;
@@ -540,8 +540,8 @@ namespace console::xcsl
 		using func_wrapper_t = std::ostream&(*)(std::ostream&);
 		inline auto get() -> console::ostream&
 		{
-			static auto&& __out__{ helper.ostream() };
-			return { __out__ };
+			static auto&& __out__{ std::make_unique<console::ostream>(helper) };
+			return { *__out__ };
 		}
 
 		inline auto operator*() -> console::ostream& 
@@ -634,5 +634,4 @@ namespace console::xcsl
 		helper.read_anykey();
 	}
 };
-
-namespace xcsl = console::xcsl;
+namespace xcout = console::xout;

@@ -4,7 +4,7 @@
 #include <console.hpp>
 #include <scripts_handler.hpp>
 
-console::helper xcsl::helper{ L"" PROJECT_NAME " v" PROJECT_VERSION };
+console::helper xcout::helper{ L"" PROJECT_NAME " v" PROJECT_VERSION };
 
 namespace mes_text_tool 
 {
@@ -102,9 +102,9 @@ namespace mes_text_tool
 				"D:\\YourGames\\DC3WY\\Advdata\\MES\n"
 			};
 
-			xcsl::helper.set_attrs(console::attrs::text_dark_red);
-			xcsl::helper.writeline(message);
-			xcsl::helper.reset_attrs();
+			xcout::helper.set_attrs(console::attrs::text_dark_red);
+			xcout::helper.writeline(message);
+			xcout::helper.reset_attrs();
 
 		}
 		else 
@@ -127,7 +127,7 @@ namespace mes_text_tool
 
 			if (!enable_console_log)
 			{
-				xcsl::helper.writeline("[PROCESSING]...\n");
+				xcout::helper.writeline("[PROCESSING]...\n");
 			}
 
 			time = handler.process(
@@ -144,30 +144,30 @@ namespace mes_text_tool
 					{
 					case mes::scripts::handler::message_level::normal:
 					{
-						xcsl::helper.writeline(message);
+						xcout::helper.writeline(message);
 						break;
 					}
 					case mes::scripts::handler::message_level::warning:
 					{
-						xcsl::helper.set_attrs(xcsl::attrs::text_dark_yellow);
-						xcsl::helper.writeline(message);
+						xcout::helper.set_attrs(xcout::attrs::text_dark_yellow);
+						xcout::helper.writeline(message);
 						break;
 					}
 					case mes::scripts::handler::message_level::error:
 					{
-						xcsl::helper.set_attrs(xcsl::attrs::text_dark_red);
-						xcsl::helper.writeline(message);
+						xcout::helper.set_attrs(xcout::attrs::text_dark_red);
+						xcout::helper.writeline(message);
 						break;
 					}
 					};
-					xcsl::helper.reset_attrs();
+					xcout::helper.reset_attrs();
 				}
 			);
 
 			if (!enable_console_log)
 			{
-				xcsl::helper.clear();
-				xcsl::helper.writeline("[COMPLETE]\n");
+				xcout::helper.clear();
+				xcout::helper.writeline("[COMPLETE]\n");
 			}
 
 			logs.write(information).write_as_format(L"- Time: %llfs\n", time);
@@ -175,13 +175,13 @@ namespace mes_text_tool
 			file.write(logs.u8string(), xfsys::file::pos::begin);
 			file.close(), logs.clear();
 			
-			xcsl::helper.set_attrs(xcsl::attrs::text_dark_yellow);
+			xcout::helper.set_attrs(xcout::attrs::text_dark_yellow);
 		}
 
-		xcsl::helper.write(information);
-		xcsl::helper.write(L"- Time: %llfs\n", time);
-		xcsl::helper.reset_attrs();
-		xcsl::helper.read_anykey();
+		xcout::helper.write(information);
+		xcout::helper.write(L"- Time: %llfs\n", time);
+		xcout::helper.reset_attrs();
+		xcout::helper.read_anykey();
 	}
 
 	extern "C" auto main(void) -> int 
