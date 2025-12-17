@@ -283,7 +283,6 @@ namespace console
 		auto writeline(std::string_view content) const noexcept -> const console_writer&;
 	};
 
-
 	class console_streambuf : public std::streambuf 
 	{
 		friend xout::_out;
