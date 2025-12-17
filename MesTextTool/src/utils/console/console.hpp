@@ -223,6 +223,7 @@ namespace console
 		auto write(std::u8string_view   content) const noexcept -> const console_helper&;
 		auto write(std::u16string_view  content) const noexcept -> const console_helper&;
 
+		inline auto write(const use_char_t auto one) const noexcept -> const console_helper&;
 		inline auto write(uint32_t cdpg, const use_char_t auto* fmt, ...) const noexcept -> const console_helper&;
 		inline auto write(const use_char_t auto* fmt, ...) const noexcept -> const console_helper&;
 
@@ -485,6 +486,11 @@ namespace console
 	{
 		out << std::u16string_view{ reinterpret_cast<const char16_t*>(wstr) };
 		return out;
+	}
+
+	inline auto console_helper::write(const use_char_t auto one) const noexcept -> const console_helper&
+	{
+		return this->write(std::basic_string_view<std::decay_t<decltype(one)>>{ &one, 1 });
 	}
 	
 	inline auto console_helper::write(uint32_t cdpg, const use_char_t auto* fmt, ...) const noexcept -> const console_helper&

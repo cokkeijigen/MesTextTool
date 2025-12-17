@@ -124,7 +124,6 @@ namespace console
 
 	auto console_helper::write(std::wstring_view content) const noexcept -> const console_helper&
 	{
-
 		if (this->m_Output != nullptr && !content.empty())
 		{
 			::WriteConsoleW(this->m_Output, content.data(), content.size(), NULL, NULL);
@@ -134,7 +133,6 @@ namespace console
 
 	auto console_helper::write(std::string_view content) const noexcept -> const console_helper&
 	{
-
 		if (this->m_Output != nullptr && !content.empty())
 		{
 			::WriteConsoleA(this->m_Output, content.data(), content.size(), NULL, NULL);
@@ -207,27 +205,27 @@ namespace console
 
 	auto console_helper::writeline(std::wstring_view content) const noexcept -> const console_helper&
 	{
-		return this->write(content).write("\n");
+		return this->write(content).write('\n');
 	}
 
 	auto console_helper::writeline(std::string_view content) const noexcept -> const console_helper&
 	{
-		return this->write(content).write("\n");
+		return this->write(content).write('\n');
 	}
 
 	auto console_helper::writeline(uint32_t cdpg, std::string_view content) const noexcept -> const console_helper&
 	{
-		return this->set_cp(cdpg).write(content).write("\n").reset_cp();
+		return this->set_cp(cdpg).write(content).write('\n').reset_cp();
 	}
 
 	auto console_helper::writeline(std::u16string_view content) const noexcept -> const console_helper&
 	{
-		return this->write(content).write("\n");
+		return this->write(content).write('\n');
 	}
 
 	auto console_helper::writeline(std::u8string_view content) const noexcept -> const console_helper&
 	{
-		return this->write(content).write("\n");
+		return this->write(content).write('\n');
 	}
 
 	auto console_helper::writer(uint32_t cdpg, attrs_t attrs) const noexcept -> console_writer
