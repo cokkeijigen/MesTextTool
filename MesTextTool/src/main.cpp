@@ -57,9 +57,13 @@ namespace mes_text_tool
 
 			auto data{ const_cast<wchar_t*>(arg.data()) };
 			std::transform(data + 1, data + arg.size(), data + 1,
-				[](wchar_t v) -> wchar_t
+				[](wchar_t c) -> wchar_t
 				{
-					return static_cast<wchar_t>(std::tolower(v));
+					return 
+					{
+						c >= L'A' && c <= L'Z' ?
+						static_cast<wchar_t>(c + 0x20) : c
+					};
 				}
 			);
 
@@ -106,7 +110,6 @@ namespace mes_text_tool
 			xcout::helper.set_attrs(console::attrs::text_dark_red);
 			xcout::helper.writeline(message);
 			xcout::helper.reset_attrs();
-
 		}
 		else 
 		{
