@@ -44,18 +44,19 @@ namespace mes_text_tool
 			}
 		}
 	}
+
 	static auto get_value_from_argv(const int argc, wchar_t* const argv[], bool& log, const mes::script_info*& info, uint32_t& cdpg)
 	{
 		for (size_t i = 1; i < argc - 1; i++)
 		{
 			std::wstring_view arg{ argv[i] };
-			if (arg.empty())
+			if (arg.empty() || arg.front() != L'-')
 			{
 				continue;
 			}
 
 			auto data{ const_cast<wchar_t*>(arg.data()) };
-			std::transform(data, data + arg.size(), data,
+			std::transform(data + 1, data + arg.size(), data + 1,
 				[](wchar_t v) -> wchar_t
 				{
 					return static_cast<wchar_t>(std::tolower(v));
