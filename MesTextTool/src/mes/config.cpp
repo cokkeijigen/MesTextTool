@@ -6,16 +6,12 @@ namespace mes
 {
 	auto config::config_file_exists(const std::string_view directory) -> bool
 	{
-		const auto path{ xfsys::path::join(directory, xstr::cvt::to_utf8(config::k_name)) };
-		const auto attr{ ::GetFileAttributesA(path.data()) };
-		return { INVALID_FILE_ATTRIBUTES != attr };
+		return xfsys::is_file(xfsys::path::join(directory, xstr::cvt::convert(config::k_name, 0)));
 	}
 
 	auto config::config_file_exists(const std::wstring_view directory) -> bool
 	{
-		const auto path{ xfsys::path::join(directory, config::k_name) };
-		const auto attr{ ::GetFileAttributesW(path.data()) };
-		return { INVALID_FILE_ATTRIBUTES != attr };
+		return xfsys::is_file(xfsys::path::join(directory, config::k_name));
 	}
 
 	auto config::read(const xfsys::file& file,config& result) -> bool
