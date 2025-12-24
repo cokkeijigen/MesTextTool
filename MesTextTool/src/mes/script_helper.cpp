@@ -187,6 +187,10 @@ namespace mes
 
 	static auto _log_text__(utils::string::buffer text, int opcode, uint32_t cdpg) -> void
 	{
+		/*xcout::helper.set_cp(cdpg);
+		xcout::helper.write("[0x%02X]%s\n", opcode, text.data());
+		xcout::helper.reset_attrs();*/
+
 		auto wstr{ text.wstring_buffer(cdpg) };
 		for (auto& achar : wstr)
 		{
@@ -208,10 +212,11 @@ namespace mes
 
 		for (const script_view::token& token : this->m_script_view.tokens())
 		{
-			/*if (info->string.its(token.value))
-			{
-				_log_text__({ reinterpret_cast<char*>(asmbin.data() + token.offset + 1) }, int(token.value), xcsl::cdpg::sjis);
-			}*/
+			//if (info->string.its(token.value))
+			//{
+			//	//if(token.value != 0x46)
+			//	_log_text__({ reinterpret_cast<char*>(asmbin.data() + token.offset + 1) }, int(token.value), xcout::cdpg::sjis);
+			//}
 
 			if (info->encstr.its(token.value))
 			{
