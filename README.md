@@ -64,6 +64,21 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 ```
 | 游戏| 简称 |
 | :-----| :----: |
+|恋夏 -れんげ-|renge|
+|スペースライブ Space Live - Advent of the Net Idols|sl|
+|T.P.さくら ～タイムパラディンさくら～ 前編|tpsk1|
+|T.P.さくら ～タイムパラディンさくら～ 後編|tpsk2|
+|紙ヒコーキ（まじかるぼっくす2009 祭・冬一番）|natuiro|
+|ビスケット（まじかるぼっくす2009 祭・冬一番）|biscuit|
+|ALBA ~Dawn of This Life~（まじかるぼっくす2009 祭・冬一番）|alba|
+|めてぶれ（まじかるぼっくす2009 祭・冬一番）|mtbr|
+|しまイチャ（まじかるぼっくす2009 祭・冬一番）|shimai|
+|ダイスき（まじかるぼっくす2009 祭・冬一番）|diceki|
+|はるか～Ｈａ・Ｒｕ・Ｋａ～（まじかるぼっくす2009 祭・冬一番）|hrk|
+|TrueWorld～真実のセカイ～|tworld|
+|舞-HiME 運命の系統樹 修羅|mhpc|
+|SAKURA ～雪月華～|sakura|
+|SAKURA ～雪月華～ SD版|sakurasd|
 |Aries Pure Dream|ariespd|
 |Aries Love Dream|ariesld|
 |終の館 ～恋文～|tyakata1|
@@ -76,12 +91,16 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 |水夏 ～SUIKAおー・157章～| suika |
 |水夏 ～SUIKA～全年齢版 | suika |
 |すくみず～フェチ☆になるもんっ！～|sukumizu|
+|すくみず2 ～泳・げ・な・い～|sukumizu2|
 |ガッデーム＆ジュテーム|gadejude|
+|あるぴじ学園|arpg0|
+|あるぴじ学園１．５|arpg1|
 |A.G.II.D.C.　～あるぴじ学園2.0　サーカス史上最大の危機！？～|ag2dc|
 |ホームメイド スイーツ| hmsw |
 |ホームメイド -Home maid-| homemaid |
 |ユニ uni.| uni |
 |Princess Party ～プリンセスパーティー～| puripa |
+|Princess Party Camellia ～プリンセスパーティーカメリア～|ccamellia|
 |百花百狼/Hyakka Hyakurou|nightshade|
 |てんぷれ！|tmpl|
 |fortissimo//Akkord:Bsusvier | ffexa |
@@ -111,6 +130,8 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 |ことり Love Ex P|ktlep|
 |D.C.〜ダ・カーポ〜　温泉編|dcxx|
 |D.C.〜ダ・カーポ〜　MEMORIES DISC|dcxx, dcmems|
+|Circus Disk ～Christmas Days～|cdcd|
+|CircusLand Ⅰ|cland1|
 
 ## 0x3 如何编译（Windows）
 **1.前提准备：**
