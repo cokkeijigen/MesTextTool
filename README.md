@@ -134,16 +134,15 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 |CircusLand Ⅰ|cland1|
 
 ## 0x3 如何编译（Windows）
-**1.前提准备：**
+- **前提准备：**
 **安装 [Visual Studio Community](https://visualstudio.microsoft.com/zh-hans/vs/community/)、**
 **[Cmake](https://cmake.org/download/)。**<br>
-**2.使用 `git clone https://github.com/cokkeijigen/MesTextTool`获取源码，**
+- **使用 `git clone https://github.com/cokkeijigen/MesTextTool`获取源码，**
 **或者直接在`GitHub`上`Code > Download ZIP`下载ZIP并解压。**<br>
-**3.打开`cmd`或者`poweshell`, `cd`到源码路径，运行`build.bat`**
-
+- **打开`cmd`或者`poweshell`, `cd`到源码路径，运行`build.bat`**
 ```sh
 git clone https://github.com/cokkeijigen/MesTextTool
 cd MesTextTool
 build.bat
 ```
-**4.运行完`build.bat`，输出exe的路径为源码目录下`.\build\Release\MesTextTool.exe`**
+**运行完`build.bat`，输出exe的路径为源码目录下`.\build\Release\MesTextTool.exe`**
