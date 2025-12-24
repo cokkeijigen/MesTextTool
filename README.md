@@ -70,7 +70,7 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 |T.P.さくら ～タイムパラディンさくら～ 後編|tpsk2|
 |紙ヒコーキ（まじかるぼっくす2009 祭・冬一番）|natuiro|
 |ビスケット（まじかるぼっくす2009 祭・冬一番）|biscuit|
-|ALBA ~Dawn of This Life~（まじかるぼっくす2009 祭・冬一番）|alba|
+|ALBA ～Dawn of This Life～（まじかるぼっくす2009 祭・冬一番）|alba|
 |めてぶれ（まじかるぼっくす2009 祭・冬一番）|mtbr|
 |しまイチャ（まじかるぼっくす2009 祭・冬一番）|shimai|
 |ダイスき（まじかるぼっくす2009 祭・冬一番）|diceki|
