@@ -28,7 +28,7 @@ namespace utils::xstr
 					_outbuf.wstring->assign(L"");
 					_outbuf.wstring->resize(_count);
 				}
-				else if (out_type == unsafe::string_type)
+				else if (out_type == unsafe::vector_type)
 				{
 					_outbuf.vector->resize(_count + 1);
 				}
