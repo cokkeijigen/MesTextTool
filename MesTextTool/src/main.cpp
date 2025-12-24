@@ -50,13 +50,17 @@ namespace mes_text_tool
 		for (size_t i = 1; i < argc - 1; i++)
 		{
 			std::wstring_view arg{ argv[i] };
-			if (arg.empty() || arg.front() != L'-')
+			if (arg.empty() || arg.size() == 1 || arg.front() != L'-')
 			{
 				continue;
 			}
+			else 
+			{
+				arg = arg.substr(1);
+			}
 
 			auto data{ const_cast<wchar_t*>(arg.data()) };
-			std::transform(data + 1, data + arg.size(), data + 1,
+			std::transform(data, data + arg.size(), data,
 				[](wchar_t c) -> wchar_t
 				{
 					return 
@@ -67,21 +71,21 @@ namespace mes_text_tool
 				}
 			);
 
-			if (arg.starts_with(L"-cp"))
+			if (arg.starts_with(L"cp"))
 			{
-				auto value{ xstr::to_integer<uint32_t>(arg.substr(3)) };
+				auto value{ xstr::to_integer<uint32_t>(arg.substr(2)) };
 				if (value.has_value())
 				{
 					cdpg = value.value();
 				}
 			}
-			else if (arg == L"-log")
+			else if (arg == L"log")
 			{
 				log = true;
 			}
 			else
 			{
-				const auto __arg{ xstr::cvt::to_utf8(arg.substr(1)) };
+				const auto __arg{ xstr::cvt::to_utf8(arg) };
 				const auto _info{ mes::script_info::query(__arg) };
 				if (_info != nullptr)
 				{
