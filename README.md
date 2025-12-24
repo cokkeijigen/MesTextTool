@@ -130,7 +130,8 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 |ことり Love Ex P|ktlep|
 |D.C.〜ダ・カーポ〜　温泉編|dcxx|
 |D.C.〜ダ・カーポ〜　MEMORIES DISC|dcxx, dcmems|
-|Circus Disk ～Christmas Days～|cdcd|
+|C.D. Christmas Days ～サーカスディスク クリスマスデイズ～|cdcd|
+|C.D.C.D.2 ～シーディーシーディー2～|cdcd2|
 |CircusLand Ⅰ|cland1|
 
 ## 0x3 如何编译（Windows）
