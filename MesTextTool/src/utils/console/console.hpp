@@ -184,7 +184,7 @@ namespace console
 	class console_helper
 	{
 		cdpg_t _cdpg{ ::GetACP() };
-
+		friend xout::_out;
 	protected:
 		HWND  m_Window{};
 		HANDLE m_Output{};
@@ -577,7 +577,7 @@ namespace console::xout
 				helper.set_cp(this->get().streambuf.cdpg);
 			}
 			helper.set_attrs(this->get().streambuf.attrs);
-			helper.write(fmt, arg_list).reset_attrs();
+			helper.vf_write(fmt, arg_list).reset_attrs();
 			if constexpr (std::is_same_v<decltype(fmt[0]), char>)
 			{
 				helper.reset_cp();
