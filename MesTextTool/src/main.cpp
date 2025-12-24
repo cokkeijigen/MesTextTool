@@ -4,7 +4,7 @@
 #include <console.hpp>
 #include <scripts_handler.hpp>
 
-console::helper xcout::helper{ L"" PROJECT_NAME " v" PROJECT_VERSION };
+console::helper_t console::helper{ L"" PROJECT_NAME " v" PROJECT_VERSION };
 
 namespace mes_text_tool 
 {
