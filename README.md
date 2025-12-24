@@ -1,9 +1,16 @@
 # MesTextTool，一个用于替换Mes脚本内文本的工具（马戏团引擎）。
 ## 0x0 输入参数
 ```log
-# -LOG or -log 输出日志（可选）
-# PATH Mes文件的目录或者需要导入文本的目录
-MesTextTool.exe [-LOG <optional>] [PATH <must>]
+# -LOG 输出日志（可选）
+# -CPxxx 字符串的CodePage*（可选）
+# -GAME  指定游戏（可选）
+# PATH Mes文件的目录或者需要导入文本的目录 （必须）
+
+# 实例
+MesTextTool.exe -log -cp932 -dc3wy D:\example\path\mes\
+
+# 可将exe重命名加上参数
+MesTextTool-log-cp932-dc3wy.exe D:\example\path\mes\
 ```
 ## 0x1 导出文本
 将`mes文件`或者`文件夹`拖动到exe
