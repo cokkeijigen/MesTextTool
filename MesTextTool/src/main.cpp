@@ -100,9 +100,9 @@ namespace mes_text_tool
 		{
 			constexpr char message[]
 			{
-				"[ILLEGAL PARAMETER] "
+				"[ILLEGAL PARAMETER] \n"
 				"At least 1 or 2 valid parameters are required.\n"
-				"Args: -log<optional> -cp[codepage]<optional> -[game]<optional>\n"
+				"Args: [-LOG <option>] [-CP <option>] [-GAME <option>] [PATH <must>]\n"
 				"Example: MesTextTool.exe -log -cp932 -dc3wy "
 				"D:\\YourGames\\DC3WY\\Advdata\\MES\n"
 			};
