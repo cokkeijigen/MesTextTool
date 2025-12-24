@@ -176,15 +176,16 @@ namespace console
 	class console_ostream;
 	class console_streambuf;
 
-	using helper    = console_helper;
-	using ostream   = console_ostream;
-	using streambuf = console_streambuf;
-	using writer    = console_writer;
+	using helper_t    = console_helper;
+	using ostream_t   = console_ostream;
+	using streambuf_t = console_streambuf;
+	using writer_t    = console_writer;
 
 	class console_helper
 	{
 		cdpg_t _cdpg{ ::GetACP() };
 		friend xout::_out;
+
 	protected:
 		HWND  m_Window{};
 		HANDLE m_Output{};
@@ -340,12 +341,12 @@ namespace console
 		console_streambuf streambuf;
 		const console_helper& helper;
 
-		friend inline auto operator<<(ostream& out, std::u8string_view   u8str) -> ostream&;
-		friend inline auto operator<<(ostream& out, std::u16string_view u16str) -> ostream&;
-		friend inline auto operator<<(ostream& out, std::wstring_view     wstr) -> ostream&;
-		friend inline auto operator<<(ostream& out, const char8_t*   u8str) -> ostream&;
-		friend inline auto operator<<(ostream& out, const char16_t* u16str) -> ostream&;
-		friend inline auto operator<<(ostream& out, const wchar_t*    wstr) -> ostream&;
+		friend inline auto operator<<(ostream_t& out, std::u8string_view   u8str) -> ostream_t&;
+		friend inline auto operator<<(ostream_t& out, std::u16string_view u16str) -> ostream_t&;
+		friend inline auto operator<<(ostream_t& out, std::wstring_view     wstr) -> ostream_t&;
+		friend inline auto operator<<(ostream_t& out, const char8_t*   u8str) -> ostream_t&;
+		friend inline auto operator<<(ostream_t& out, const char16_t* u16str) -> ostream_t&;
+		friend inline auto operator<<(ostream_t& out, const wchar_t*    wstr) -> ostream_t&;
 	public:
 
 		inline ~console_ostream() noexcept { this->flush(); }
@@ -411,7 +412,7 @@ namespace console
 
 	};
 
-	inline auto operator<<(ostream& out, cdpg_t cdpg) -> ostream&
+	inline auto operator<<(ostream_t& out, cdpg_t cdpg) -> ostream_t&
 	{
 		auto raw{ dynamic_cast<console_ostream*>(&out) };
 		if (raw != nullptr) 
@@ -423,7 +424,7 @@ namespace console
 	
 	template<class T>
 	requires std::is_same_v<T, attrs_t> || std::is_same_v<T, attrs_t::color> || std::is_same_v<T, attrs_t::other>
-	inline auto operator<<(ostream& out, T attrs) -> ostream&
+	inline auto operator<<(ostream_t& out, T attrs) -> ostream_t&
 	{
 		auto raw{ dynamic_cast<console_ostream*>(&out) };
 		if (raw != nullptr) 
@@ -433,7 +434,7 @@ namespace console
 		return out;
 	}
 
-	inline auto operator<<(ostream& out, std::u8string_view u8str) -> ostream&
+	inline auto operator<<(ostream_t& out, std::u8string_view u8str) -> ostream_t&
 	{
 		auto raw{ dynamic_cast<console_ostream*>(&out) };
 		if (raw != nullptr)
@@ -449,7 +450,7 @@ namespace console
 		return out;
 	}
 
-	inline auto operator<<(ostream& out, std::u16string_view u16str) -> ostream&
+	inline auto operator<<(ostream_t& out, std::u16string_view u16str) -> ostream_t&
 	{
 		auto raw{ dynamic_cast<console_ostream*>(&out) };
 		if (raw != nullptr)
@@ -459,7 +460,7 @@ namespace console
 		return out;
 	}
 
-	auto operator<<(ostream& out, std::wstring_view wstr) -> ostream&
+	auto operator<<(ostream_t& out, std::wstring_view wstr) -> ostream_t&
 	{
 		auto raw{ dynamic_cast<console_ostream*>(&out) };
 		if (raw != nullptr)
@@ -469,19 +470,19 @@ namespace console
 		return out;
 	}
 
-	inline auto operator<<(ostream& out, const char8_t* u8str) -> ostream&
+	inline auto operator<<(ostream_t& out, const char8_t* u8str) -> ostream_t&
 	{
 		out << std::u8string_view{ u8str };
 		return out;
 	}
 
-	auto operator<<(ostream& out, const char16_t* u16str) -> ostream&
+	auto operator<<(ostream_t& out, const char16_t* u16str) -> ostream_t&
 	{
 		out << std::u16string_view{ u16str };
 		return out;
 	}
 
-	auto operator<<(ostream& out, const wchar_t* wstr) -> ostream&
+	auto operator<<(ostream_t& out, const wchar_t* wstr) -> ostream_t&
 	{
 		out << std::u16string_view{ reinterpret_cast<const char16_t*>(wstr) };
 		return out;
@@ -526,11 +527,13 @@ namespace console
 		console_ostream out{ *this };
 		std::print(out, fmt, std::forward<T&&>(args)...);
 	}
+
+	extern helper_t helper;
 }
 
 namespace console::xout
 {
-	extern console::console_helper helper;
+	inline helper_t& helper{ console::helper };
 	using color = console::attrs::color;
 	using other = console::attrs::other;
 	using attrs = console::attrs;
@@ -543,13 +546,13 @@ namespace console::xout
 	inline struct _out
 	{
 		using func_wrapper_t = std::ostream&(*)(std::ostream&);
-		inline auto get() -> console::ostream&
+		inline auto get() -> console::ostream_t&
 		{
-			static auto&& __out__{ std::make_unique<console::ostream>(helper) };
+			static auto&& __out__{ std::make_unique<console::ostream_t>(helper) };
 			return { *__out__ };
 		}
 
-		inline auto operator*() -> console::ostream& 
+		inline auto operator*() -> console::ostream_t&
 		{
 			return { this->get() };
 		}
