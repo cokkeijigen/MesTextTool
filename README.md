@@ -2,7 +2,7 @@
 ## 0x0 输入参数
 ```log
 # -LOG 输出日志（可选）
-# -CPxxx 字符串的CodePage（可选）
+# -CP[xxx] 字符串的CodePage（可选）
 # -GAME  指定游戏（可选）
 # PATH Mes文件的目录或者需要导入文本的目录 （必须）
 
