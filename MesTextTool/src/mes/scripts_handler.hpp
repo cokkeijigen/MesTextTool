@@ -17,9 +17,6 @@ namespace mes::scripts
 		
 		std::wstring m_input_directory_or_file{};
 		std::wstring m_output_directory{};
-		
-		mutable std::vector<std::wstring> m_outputs{};
-
 		uint32_t m_input_mes_code_page{ defualt_code_page };
 
 		auto import_text_handle() const -> void;
