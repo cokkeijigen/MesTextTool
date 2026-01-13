@@ -533,6 +533,7 @@ namespace console
 
 namespace console::xout
 {
+	inline constexpr auto&& helper{ console::helper };
 	using color = console::attrs::color;
 	using other = console::attrs::other;
 	using attrs = console::attrs;
@@ -547,7 +548,7 @@ namespace console::xout
 		using func_wrapper_t = std::ostream&(*)(std::ostream&);
 		inline auto get() -> console::ostream_t&
 		{
-			static auto&& __out__{ std::make_unique<console::ostream_t>(console::helper) };
+			static auto&& __out__{ std::make_unique<console::ostream_t>(helper) };
 			return { *__out__ };
 		}
 
