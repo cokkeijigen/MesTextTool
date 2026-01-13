@@ -120,7 +120,6 @@ namespace mes
 				const size_t value_count{ line.size() - (offset + 4) };
 				std::u8string_view value{ line.substr(offset + 3, value_count) };
 
-				;
 				auto pair{ std::make_pair(xstr::cvt::to_utf16(key), xstr::cvt::to_utf16(value)) };
 				if (flag == 5)
 				{
