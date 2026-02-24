@@ -14,7 +14,7 @@ namespace mes
 		return xfsys::is_file(xfsys::path::join(directory, config::k_name));
 	}
 
-	auto config::read(const xfsys::file& file,config& result) -> bool
+	auto config::read(const xfsys::file& file, config& result) -> bool
 	{
 		if (!file.is_open())
 		{

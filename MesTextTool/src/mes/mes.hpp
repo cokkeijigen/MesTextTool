@@ -1,7 +1,9 @@
 #pragma once
 #include <span>
+#include <variant>
 #include <xmem.hpp>
 #include <xfsys.hpp>
+#include <mes_advtxt.hpp>
 
 namespace mes 
 {
@@ -10,7 +12,7 @@ namespace mes
 		struct section
 		{
 			const uint8_t beg{}, end{};
-			auto its(const uint8_t key) const noexcept -> bool;
+			auto is(const uint8_t key) const noexcept -> bool;
 		};
 
 		enum offset_t : uint8_t
@@ -88,10 +90,17 @@ namespace mes
 	{
 	public:
 
-		struct token 
+		struct token
 		{
-			uint8_t  value{};
+			const uint8_t*      data{};
 			int32_t offset{}, length{};
+
+			auto uint16x4() const noexcept -> const script_info::uint16x4_t*;
+			auto uint8str() const noexcept -> const script_info::uint8str_t*;
+			auto uint8x2 () const noexcept -> const script_info::uint8x2_t*;
+			auto string  () const noexcept -> const script_info::string_t*;
+			auto encstr  () const noexcept -> const script_info::encstr_t*;
+			auto opcode  () const noexcept -> uint8_t;
 		};
 
 		template<class T>
@@ -227,6 +236,36 @@ namespace mes
 			}
 		};
 
+		class union_view_t
+		{
+		public:
+
+			using variant = std::variant<mes::script_view, mes::advtxt_view>;
+
+			auto script_view() const noexcept -> const mes::script_view*;
+			auto advtxt_view() const noexcept -> const mes::advtxt_view*;
+
+			inline union_view_t() noexcept = default;
+			union_view_t(mes::script_view&& script_view) noexcept;
+			union_view_t(mes::advtxt_view&& advtxt_view) noexcept;
+
+			auto operator=(mes::script_view&& script_view) noexcept -> union_view_t&;
+			auto operator=(mes::advtxt_view&& advtxt_view) noexcept -> union_view_t&;
+
+		protected:
+			variant m_value{};
+		};
+
+		class union_info_t 
+		{
+		public:
+			using variant = std::variant<mes::script_info*, mes::advtxt_info>;
+
+
+		protected:
+			variant m_value{};
+		};
+
 		inline script_helper () noexcept {};
 		inline ~script_helper() noexcept {};
 
@@ -255,12 +294,15 @@ namespace mes
 		auto export_text(const bool absolute_file_offset = true) const noexcept -> std::vector<text_pair_t>;
 		auto import_text(const std::vector<text_pair_t>& texts, bool absolute_file_offset = true) noexcept -> bool;
 
-
 	protected:
-		
+
+		auto advtxt_import(const std::vector<text_pair_t>& texts, bool absolute_file_offset) noexcept -> bool;
+		auto script_import(const std::vector<text_pair_t>& texts, bool absolute_file_offset) noexcept -> bool;
+
 		const  mes::script_info* m_script_info{};
 		mutable mes::script_view m_script_view{};
 		mutable xmem::buffer<uint8_t> m_buffer{};
+		mutable union_view_t m_data_view{};
 	};
 
 	namespace script 

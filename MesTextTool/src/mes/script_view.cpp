@@ -43,6 +43,36 @@ namespace mes
 		return this->m_version;
 	}
 
+	auto script_view::token::uint16x4() const noexcept -> const script_info::uint16x4_t*
+	{
+		return reinterpret_cast<const script_info::uint16x4_t*>(this->data);
+	}
+
+	auto script_view::token::uint8str() const noexcept -> const script_info::uint8str_t*
+	{
+		return reinterpret_cast<const script_info::uint8str_t*>(this->data);
+	}
+
+	auto script_view::token::uint8x2() const noexcept -> const script_info::uint8x2_t*
+	{
+		return reinterpret_cast<const script_info::uint8x2_t*>(this->data);
+	}
+
+	auto script_view::token::string() const noexcept -> const script_info::string_t*
+	{
+		return reinterpret_cast<const script_info::string_t*>(this->data);
+	}
+
+	auto script_view::token::encstr() const noexcept -> const script_info::encstr_t*
+	{
+		return reinterpret_cast<const script_info::encstr_t*>(this->data);
+	}
+
+	auto script_view::token::opcode() const noexcept -> uint8_t
+	{
+		return static_cast<uint8_t>(this->data[0]);
+	}
+
 	script_view::script_view(const std::span<uint8_t> raw, const script_info* const info)
 		: m_raw{ raw, 0x00 }, m_info{ info }
 	{
@@ -175,32 +205,32 @@ namespace mes
 		{
 			script_view::token token
 			{
-				.value  = this->m_asmbin[offset],
+				.data   = &this->m_asmbin[offset],
 				.offset = static_cast<int32_t>(offset)
 			};
 
-			if (this->m_info->uint8x2.its(token.value))
+			if (this->m_info->uint8x2.is(token.opcode()))
 			{
 				token.length = 0x03;
 			}
-			else if (this->m_info->uint8str.its(token.value))
+			else if (this->m_info->uint8str.is(token.opcode()))
 			{
-				token.length = 0x02;
-				auto temp = this->m_asmbin.data() + offset + 0x02;
+				token.length  = 0x02;
+				uint8_t* temp = this->m_asmbin.data() + offset + 0x02;
 				do {
 					token.length++;
 					temp++;
 				} while (*(temp - 1));
 			}
-			else if (this->m_info->string.its(token.value) || this->m_info->encstr.its(token.value))
+			else if (this->m_info->string.is(token.opcode()) || this->m_info->encstr.is(token.opcode()))
 			{
-				auto temp = this->m_asmbin.data() + offset;
+				uint8_t* temp = this->m_asmbin.data() + offset;
 				do {
 					token.length++;
 					temp++;
 				} while (*(temp - 1));
 			}
-			else if (this->m_info->uint16x4.its(token.value))
+			else if (this->m_info->uint16x4.is(token.opcode()))
 			{
 				token.length = 0x09;
 			}

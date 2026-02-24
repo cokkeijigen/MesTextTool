@@ -82,17 +82,25 @@ namespace mes
 		{ "ccamellia" , offset1, 0x676C, { 0x00, 0x28 }, { 0x29, 0x2F }, { 0x30, 0x4A }, { 0x4B, 0x4E }, { 0x4F, 0xFF },  0x20, { 0x44, 0x46 }/*---*/}, // Princess Party Camellia ～プリンセスパーティーカメリア～
 	};
 
-	[[maybe_unused]] static struct __script_infos_auto_sort__
+	const char* const advtxt_info::supports[]
 	{
-		__script_infos_auto_sort__(void) noexcept
-		{
-			const auto begin   { const_cast<script_info*>(script_info::infos)     };
-			auto constexpr size{ sizeof(script_info::infos) / sizeof(script_info) };
-			std::ranges::sort(begin, begin + size, std::greater{}, &script_info::version);
-		}
-	} __unused__;
+		"utaeho4", "infantaria"
+	};
 
-	auto script_info::section::its(const uint8_t key) const noexcept -> bool
+	const advtxt_info advtxt_info::infos[]
+	{
+		{ "advtxt" , { 0x00       } },  // default
+		{ "utaeho4", { 0x00, 0x1A } }
+	};
+
+	[[maybe_unused]] static auto __script_info_init__ = []()
+	{
+		constexpr static const auto begin{ const_cast<script_info*>(script_info::infos) };
+		std::ranges::sort(begin, begin + std::size(script_info::infos), std::greater{}, &script_info::version);
+		return true;
+	}();
+
+	auto script_info::section::is(const uint8_t key) const noexcept -> bool
 	{
 		return !(beg == end && beg == 0xFF) && (key >= beg && key <= end);
 	}
