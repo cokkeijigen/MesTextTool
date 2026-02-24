@@ -6,7 +6,8 @@
 namespace utils::xmem {
 
 	template <class T, class elem_t>
-	concept valid_iterator_t = requires(T it) {
+	concept valid_iterator_t = requires(T it) 
+	{
 		{ ++it } -> std::same_as<T&>;
 		{ it++ } -> std::convertible_to<T>;
 		{ it - it } -> std::convertible_to<size_t>;
@@ -14,7 +15,8 @@ namespace utils::xmem {
 	};
 
 	template<class T, class elem_t>
-	concept iterable_t = requires(T val) {
+	concept iterable_t = requires(T val)
+	{
 		{ val.begin() } -> std::convertible_to<class T::iterator>;
 		{ val.end  () } -> std::convertible_to<class T::iterator>;
 		typename std::enable_if<xmem::valid_iterator_t<class T::iterator, elem_t>>::type;
