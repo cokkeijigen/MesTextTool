@@ -115,7 +115,7 @@ namespace mes
 		const bool is_supported = std::any_of
 		(
 			std::begin(advtxt_info::supports), 
-			std::end(advtxt_info::supports),
+			std::end  (advtxt_info::supports),
 			[name](const char* s) 
 			{
 				return s != nullptr && name == s;
