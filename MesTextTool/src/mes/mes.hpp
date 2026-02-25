@@ -259,8 +259,7 @@ namespace mes
 		class union_info_t 
 		{
 		public:
-			using variant = std::variant<mes::script_info*, mes::advtxt_info>;
-
+			using variant = std::variant<const mes::script_info*, const mes::advtxt_info*>;
 
 		protected:
 			variant m_value{};
@@ -305,6 +304,148 @@ namespace mes
 		mutable union_view_t m_data_view{};
 	};
 
+	
+	inline script_view::script_view(const std::span<uint8_t> raw, const uint16_t version)
+		: script_view{ raw, script_info::query(version) }
+	{
+	}
+
+	inline script_view::script_view(const std::span<uint8_t> raw, const std::string_view name)
+		:script_view{ raw, script_info::query(name) }
+	{
+	}
+
+	inline auto script_view::raw() const noexcept -> const script_view::view_t<uint8_t>&
+	{
+		return this->m_raw;
+	}
+
+	inline auto script_view::info() const noexcept -> const script_info* const
+	{
+		return this->m_info;
+	}
+
+	inline auto script_view::asmbin() const noexcept -> const view_t<uint8_t>&
+	{
+		return this->m_asmbin;
+	}
+
+	inline auto script_view::labels() const noexcept -> const view_t<int32_t>&
+	{
+		return this->m_labels;
+	}
+
+	inline auto script_view::tokens() const noexcept -> const std::vector<token>&
+	{
+		return this->m_tokens;
+	}
+
+	inline auto script_view::version() const noexcept -> uint16_t
+	{
+		return this->m_version;
+	}
+
+	inline auto script_view::token::uint16x4() const noexcept -> const script_info::uint16x4_t*
+	{
+		return reinterpret_cast<const script_info::uint16x4_t*>(this->data);
+	}
+
+	inline auto script_view::token::uint8str() const noexcept -> const script_info::uint8str_t*
+	{
+		return reinterpret_cast<const script_info::uint8str_t*>(this->data);
+	}
+
+	inline auto script_view::token::uint8x2() const noexcept -> const script_info::uint8x2_t*
+	{
+		return reinterpret_cast<const script_info::uint8x2_t*>(this->data);
+	}
+
+	inline auto script_view::token::string() const noexcept -> const script_info::string_t*
+	{
+		return reinterpret_cast<const script_info::string_t*>(this->data);
+	}
+
+	inline auto script_view::token::encstr() const noexcept -> const script_info::encstr_t*
+	{
+		return reinterpret_cast<const script_info::encstr_t*>(this->data);
+	}
+
+	inline auto script_view::token::opcode() const noexcept -> uint8_t
+	{
+		return static_cast<uint8_t>(this->data[0]);
+	}
+	
+	inline auto script_helper::union_view_t::advtxt_view() const noexcept -> const mes::advtxt_view*
+	{
+		if (auto&& value = std::get_if<mes::advtxt_view>(&this->m_value))
+		{
+			return value;
+		}
+		return nullptr;
+	}
+	
+	inline auto script_helper::union_view_t::script_view() const noexcept -> const mes::script_view*
+	{
+		if (auto&& value = std::get_if<mes::script_view>(&this->m_value))
+		{
+			return value;
+		}
+		return nullptr;
+	}
+
+	inline script_helper::union_view_t::union_view_t(mes::script_view&& script_view) noexcept
+	{
+		this->m_value = std::move(script_view);
+	}
+
+	inline script_helper::union_view_t::union_view_t(mes::advtxt_view&& advtxt_view) noexcept
+	{
+		this->m_value = std::move(advtxt_view);
+	}
+
+	inline auto script_helper::union_view_t::operator=(mes::script_view&& script_view) noexcept -> union_view_t&
+	{
+		this->m_value = std::move(script_view);
+		return *this;
+	}
+
+	inline auto script_helper::union_view_t::operator=(mes::advtxt_view&& advtxt_view) noexcept -> union_view_t&
+	{
+		this->m_value = std::move(advtxt_view);
+		return *this;
+	}
+
+	inline script_helper::script_helper(const std::string_view using_script_info_name) noexcept
+		: m_script_info{ script_info::query(using_script_info_name) }
+	{
+	}
+
+	inline script_helper::script_helper(const mes::script_info* const using_script_info) noexcept
+		: m_script_info{ using_script_info }
+	{
+	}
+
+	inline auto script_helper::is_parsed() const noexcept -> bool
+	{
+		return !this->m_script_view.tokens().empty();
+	}
+
+	inline auto script_helper::script_view() const noexcept -> const mes::script_view&
+	{
+		return this->m_script_view;
+	}
+
+	inline auto script_helper::script_info() const noexcept -> const mes::script_info* const
+	{
+		return this->m_script_info;
+	}
+
+	inline auto script_helper::using_script_info(const mes::script_info* const info) noexcept -> mes::script_helper&
+	{
+		this->m_script_info = info;
+		return *this;
+	}
+
 	namespace script 
 	{
 		using info = script_info;
@@ -312,5 +453,6 @@ namespace mes
 		using helper = script_helper;
 		using text_pair_t    = script_helper::text_pair_t;
 		using string_union_t = script_helper::string_union_t;
+		using union_info_t   = script_helper::union_info_t;
 	}
 }

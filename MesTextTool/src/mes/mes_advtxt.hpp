@@ -9,9 +9,11 @@ namespace mes
 	{
 		const char* name;
 		const std::initializer_list<uint8_t> encstrs; // the opcode for encrypted strings in scene text
-		
+		inline auto is_encstrs(uint8_t value) const noexcept -> bool;
+
 		static const char* const supports[];
 		static const advtxt_info infos[];
+		static auto get(const std::string_view name) -> const advtxt_info*;
 	};
 
 	class advtxt_view
@@ -22,6 +24,15 @@ namespace mes
 		{
 			const uint8_t*      data{};
 			int32_t offset{}, length{};
+
+		    #pragma pack(push, 1)
+			struct value_t { uint8_t opcode, data[]; };
+			#pragma pack(pop)
+
+			inline auto value() const noexcept -> const value_t*
+			{
+				return reinterpret_cast<const value_t*>(this->data);
+			}
 		};
 
 		#pragma pack(push, 1)
@@ -129,6 +140,11 @@ namespace mes
 	inline auto advtxt_view::header() const noexcept -> const header_t*
 	{
 		return reinterpret_cast<const header_t*>(this->m_raw.data());
+	}
+
+	inline auto advtxt_info::is_encstrs(uint8_t value) const noexcept -> bool
+	{
+		return std::find(this->encstrs.begin(), this->encstrs.end(), value) != this->encstrs.end();
 	}
 
 	auto is_advtxt(const std::span<const uint8_t> data) -> bool;

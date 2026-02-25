@@ -81,24 +81,64 @@ namespace mes
 		{ "renge"     , offset1, 0x4469, { 0x00, 0x28 }, { 0x29, 0x2E }, { 0x2F, 0x49 }, { 0x4A, 0x4D }, { 0x4E, 0xFF },  0x20, { 0x35 }/*---------*/}, // 恋夏 -れんげ-
 		{ "ccamellia" , offset1, 0x676C, { 0x00, 0x28 }, { 0x29, 0x2F }, { 0x30, 0x4A }, { 0x4B, 0x4E }, { 0x4F, 0xFF },  0x20, { 0x44, 0x46 }/*---*/}, // Princess Party Camellia ～プリンセスパーティーカメリア～
 	};
+	
+	[[maybe_unused]] static auto __script_infos_init__ = []()
+	{
+		constexpr static const auto begin{ const_cast<script_info*>(std::begin(script_info::infos)) };
+		constexpr static const auto   end{ const_cast<script_info*>(std::end  (script_info::infos)) };
+		std::ranges::sort(begin, end, std::greater{}, &script_info::version);
+		return true;
+	}();
 
 	const char* const advtxt_info::supports[]
 	{
-		"utaeho4", "infantaria"
+		"utaeho4", "infantaria", "suikademo"
 	};
 
 	const advtxt_info advtxt_info::infos[]
 	{
-		{ "advtxt" , { 0x00       } },  // default
-		{ "utaeho4", { 0x00, 0x1A } }
+		{ "advtxt"   , { 0x00       } },  // default
+		{ "utaeho4"  , { 0x00, 0x1A } },
+		{ "suikademo", { 0x00, 0x16 } }
 	};
 
-	[[maybe_unused]] static auto __script_info_init__ = []()
+	auto advtxt_info::get(const std::string_view name) -> const advtxt_info*
 	{
-		constexpr static const auto begin{ const_cast<script_info*>(script_info::infos) };
-		std::ranges::sort(begin, begin + std::size(script_info::infos), std::greater{}, &script_info::version);
-		return true;
-	}();
+		static std::string temp_name{};
+		static advtxt_info temp_info{ advtxt_info::infos[0] };
+
+		if (name.empty())
+		{
+			return &advtxt_info::infos[0];
+		}
+
+		const bool is_supported = std::any_of
+		(
+			std::begin(advtxt_info::supports), 
+			std::end(advtxt_info::supports),
+			[name](const char* s) 
+			{
+				return s != nullptr && name == s;
+			}
+		);
+
+		if (!is_supported) 
+		{
+			return nullptr;
+		}
+
+		for (const auto& info : advtxt_info::infos) 
+		{
+			if (info.name == name) 
+			{
+				return &info;
+			}
+		}
+
+		temp_name.assign(name);
+		temp_info.name = temp_name.data();
+		return &temp_info;
+	}
 
 	auto script_info::section::is(const uint8_t key) const noexcept -> bool
 	{

@@ -118,6 +118,7 @@ namespace mes_text_tool
 		else 
 		{
 			bool enable_console_log{ false };
+			//mes::script::union_info_t input_script_info{};
 			const mes::script_info* input_script_info{ nullptr };
 			uint32_t input_code_page{ mes::scripts::defualt_code_page };
 
