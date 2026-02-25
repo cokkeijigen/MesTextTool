@@ -304,6 +304,20 @@ namespace mes
 		mutable union_view_t m_data_view{};
 	};
 
+
+	inline auto script_info::section::is(const uint8_t key) const noexcept -> bool
+	{
+		return !(beg == end && beg == 0xFF) && (key >= beg && key <= end);
+	}
+
+	inline auto script_info::operator=(const mes::script_info& other) -> script_info&
+	{
+		if (this != reinterpret_cast<const script_info*>(&other))
+		{
+			std::memcpy(this, &other, sizeof(script_info));
+		}
+		return *this;
+	}
 	
 	inline script_view::script_view(const std::span<uint8_t> raw, const uint16_t version)
 		: script_view{ raw, script_info::query(version) }
