@@ -3,6 +3,56 @@
 
 namespace mes 
 {
+	const char* const advtxt_info::supports[]
+	{
+		"utaeho4", "infantaria", "suikademo"
+	};
+
+	const advtxt_info advtxt_info::infos[]
+	{
+		{ "advtxt"   , { 0x00       } },  // default
+		{ "utaeho4"  , { 0x00, 0x1A } },
+		{ "suikademo", { 0x00, 0x16 } }
+	};
+
+	auto advtxt_info::get(const std::string_view name) -> const advtxt_info*
+	{
+		static std::string temp_name{};
+		static advtxt_info temp_info{ advtxt_info::infos[0] };
+
+		if (name.empty())
+		{
+			return &advtxt_info::infos[0];
+		}
+
+		const bool is_supported = std::any_of
+		(
+			std::begin(advtxt_info::supports),
+			std::end(advtxt_info::supports),
+			[name](const char* s)
+			{
+				return s != nullptr && name == s;
+			}
+		);
+
+		if (!is_supported)
+		{
+			return nullptr;
+		}
+
+		for (const auto& info : advtxt_info::infos)
+		{
+			if (info.name == name)
+			{
+				return &info;
+			}
+		}
+
+		temp_name.assign(name);
+		temp_info.name = temp_name.data();
+		return &temp_info;
+	}
+
 	advtxt_view::advtxt_view(const std::span<uint8_t> raw) noexcept 
 		: m_raw{ raw, 0x00 }
 	{
@@ -12,7 +62,7 @@ namespace mes
 		}
 
 		const auto header{ reinterpret_cast<header_t*>(this->m_raw.data()) };
-		if (std::memcmp(header->magic, magic, sizeof(magic)) != 0)
+		if (std::memcmp(header->magic, advtxt_view::magic, sizeof(advtxt_view::magic)) != 0)
 		{
 			return;
 		}
