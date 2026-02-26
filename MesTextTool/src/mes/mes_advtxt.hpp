@@ -98,7 +98,7 @@ namespace mes
 
 		protected:
 
-			inline auto find(size_t start, const std::initializer_list<T> target) -> size_t
+			inline auto find(size_t start, const std::span<const T> target) -> size_t
 			{
 				const auto it{ std::search(this->begin() + start, this->end(), target.begin(), target.end()) };
 				if (it == this->end())
@@ -108,8 +108,6 @@ namespace mes
 				return std::distance(this->begin(), it);
 			}
 		};
-
-		static constexpr const uint8_t magic[8]{ '#', 'A','D','V','_','T','X', 'T' };
 
 		advtxt_view() noexcept = default;
 		advtxt_view(const std::span<uint8_t> raw, const advtxt_info* info) noexcept;
@@ -170,6 +168,8 @@ namespace mes
 	{
 		using view = advtxt_view;
 		using info = advtxt_info;
+		inline static constexpr const uint8_t endtoken[2]{ 0x0A, 0x0D };
+		static inline constexpr const uint8_t magic   [8]{ '#', 'A','D','V','_','T','X', 'T' };
 
 		auto decrypt_string(const std::span<const uint8_t> str) -> std::string;
 

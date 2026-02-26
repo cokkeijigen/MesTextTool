@@ -91,18 +91,18 @@ namespace mes
 	advtxt_view::advtxt_view(const std::span<uint8_t> raw, const advtxt_info* info) noexcept
 		: m_raw{ raw, 0x00 }, m_info{ info }
 	{
-		if (raw.size() < sizeof(advtxt_view::magic) || raw.data() == nullptr)
+		if (raw.size() < sizeof(mes::advtxt::magic) || raw.data() == nullptr)
 		{
 			return;
 		}
 
 		const auto header{ reinterpret_cast<header_t*>(this->m_raw.data()) };
-		if (std::memcmp(header->magic, advtxt_view::magic, sizeof(advtxt_view::magic)) != 0)
+		if (std::memcmp(header->magic, mes::advtxt::magic, sizeof(mes::advtxt::magic)) != 0)
 		{
 			return;
 		}
 
-		const size_t offset{ (header->entries.count * 2) + sizeof(advtxt_view::magic) };
+		const size_t offset{ (header->entries.count * 2) + sizeof(mes::advtxt::magic) };
 		this->m_asmbin = view_t<uint8_t>
 		{
 			std::span<uint8_t> { raw.data() + offset, raw.size() - offset },
@@ -124,7 +124,7 @@ namespace mes
 		size_t current{};
 		while (true)
 		{
-			const size_t token_end{ this->m_asmbin.find(current, { 0x0A, 0x0D }) }; // 0A0D -> \n\r
+			const size_t token_end{ this->m_asmbin.find(current, mes::advtxt::endtoken) }; // 0A0D -> \n\r
 			if (token_end == view_t<uint8_t>::nops)
 			{
 				break;
@@ -157,7 +157,7 @@ namespace mes
 		}
 
 		const auto header{ reinterpret_cast<const mes::advtxt_view::header_t*>(data.data()) };
-		const auto result{ std::memcmp(header->magic, mes::advtxt_view::magic, sizeof(mes::advtxt_view::magic)) };
+		const auto result{ std::memcmp(header->magic, mes::advtxt::magic, sizeof(mes::advtxt::magic)) };
 		return result == 0;
 	}
 

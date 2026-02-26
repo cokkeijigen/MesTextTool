@@ -401,6 +401,39 @@ namespace mes
 			return false;
 		}
 
+		utils::xmem::buffer<uint8_t> buffer{};
+		buffer.resize(this->m_buffer.size());
+		
+		const mes::advtxt_info* info{ advtxt_view->info() };
+		const mes::advtxt_view::view_t<uint8_t>& asmbin{ advtxt_view->asmbin() };
+		const int32_t base{ absolute_file_offset ? asmbin.offset() : 0 };
+
+		// Copy the header bytes of the raw data.
+		buffer.write(advtxt_view->raw().data(), asmbin.offset());
+
+		for (const advtxt_view::token& token : tokens)
+		{
+			if (info->is_encstrs(token->opcode))
+			{
+				const auto&& it{ std::ranges::find(texts, token.offset + base, &text_pair_t::offset) };
+				if (it != texts.end())
+				{
+					buffer.write(token->opcode).write(it->text().string);
+					buffer.write(mes::advtxt::endtoken);
+					continue;
+				}
+			}
+			buffer.write(token.data, token.length);
+			buffer.write(mes::advtxt::endtoken);
+		}
+
+		this->m_buffer    = std::move(buffer);
+		this->m_data_view = mes::advtxt_view
+		{
+			std::span<uint8_t>{ this->m_buffer.data(), this->m_buffer.count() },
+			this->m_view_info.advtxt_info()
+		};
+
 		return true;
 	}
 }
