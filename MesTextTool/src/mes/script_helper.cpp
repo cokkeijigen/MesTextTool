@@ -230,7 +230,7 @@ namespace mes
 
 					std::ranges::for_each(text, [&](char& ch) {
 						ch += script_view->info()->enckey; // 解密字符串
-						});
+					});
 
 					texts.push_back(text_pair_t{ offset, text });
 				}
@@ -418,13 +418,12 @@ namespace mes
 				const auto&& it{ std::ranges::find(texts, token.offset + base, &text_pair_t::offset) };
 				if (it != texts.end())
 				{
-					buffer.write(token->opcode).write(it->text().string);
-					buffer.write(mes::advtxt::endtoken);
+					const std::string text{ advtxt::string_codec(it->text().string) };
+					buffer.write(token->opcode).write(text).write(mes::advtxt::endtoken);
 					continue;
 				}
 			}
-			buffer.write(token.data, token.length);
-			buffer.write(mes::advtxt::endtoken);
+			buffer.write(token.data, token.length).write(mes::advtxt::endtoken);
 		}
 
 		this->m_buffer    = std::move(buffer);

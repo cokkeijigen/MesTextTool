@@ -161,7 +161,7 @@ namespace mes
 		return result == 0;
 	}
 
-	auto advtxt::decrypt_string(const std::span<const uint8_t> str) -> std::string
+	auto advtxt::string_codec(const std::span<const uint8_t> str) -> std::string
 	{
 		if (str.empty()) return {};
 
@@ -184,6 +184,15 @@ namespace mes
 		return result;
 	}
 
+	auto advtxt::string_codec(const std::string_view str) -> std::string
+	{
+		return advtxt::string_codec(std::span
+		{ 
+			reinterpret_cast<const uint8_t*>(str.data()), 
+			str.size() 
+		});
+	}
+
 	auto advtxt::string_parse(const view::token& token) -> std::string
 	{
 		if (token.data != nullptr && token.length > 1)
@@ -193,7 +202,7 @@ namespace mes
 				token.data + 1,
 				static_cast<size_t>(token.length - 1)
 			};
-			return advtxt::decrypt_string(str);
+			return advtxt::string_codec(str);
 		}
 		return {};
 	}
