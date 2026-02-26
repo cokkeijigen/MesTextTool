@@ -16,16 +16,26 @@ namespace mes_text_tool
 		L"- GitHub: https://github.com/cokkeijigen/MesTextTool\n"
 	};
 
-	static auto get_value_from_exename(const wchar_t* args, bool& log, const mes::script_info*& info, uint32_t& cdpg) -> void
+	static auto get_value_from_exename(const wchar_t* args, bool& log, mes::script::union_info_t& info, uint32_t& cdpg) -> void
 	{
 		xstr::wstring_buffer exename{ xfsys::path::name(args) };
 		const auto splits{ exename.to_lower().split_of(L'.', L'-', L'_') };
 
 		for (const auto& arg : std::ranges::reverse_view(splits)) 
 		{
-			if (nullptr == info)
+			if (info.empty())
 			{
-				info = mes::script_info::query(xstr::cvt::to_utf8(arg));
+				const auto _arg{ xstr::cvt::to_utf8(arg) };
+				info = mes::script_info::query(_arg);
+				if (info.script_info() != nullptr)
+				{
+					continue;
+				}
+				info = mes::advtxt_info::get(_arg);
+				if (info.advtxt_info() != nullptr)
+				{
+					continue;
+				}
 			}
 
 			if (arg.starts_with(L"cp"))
@@ -45,7 +55,7 @@ namespace mes_text_tool
 		}
 	}
 
-	static auto get_value_from_argv(const int argc, wchar_t* const argv[], bool& log, const mes::script_info*& info, uint32_t& cdpg)
+	static auto get_value_from_argv(const int argc, wchar_t* const argv[], bool& log, mes::script::union_info_t& info, uint32_t& cdpg)
 	{
 		for (size_t i = 1; i < argc - 1; i++)
 		{
@@ -86,10 +96,18 @@ namespace mes_text_tool
 			else
 			{
 				const auto __arg{ xstr::cvt::to_utf8(arg) };
-				const auto _info{ mes::script_info::query(__arg) };
-				if (_info != nullptr)
+				const auto script_info{ mes::script_info::query(__arg) };
+				if (script_info != nullptr)
 				{
-					info = _info;
+					info = script_info;
+					continue;
+				}
+
+				const auto advtxt_info{ mes::advtxt_info::get(__arg) };
+				if (advtxt_info != nullptr)
+				{
+					info = advtxt_info;
+					continue;
 				}
 			}
 		}
@@ -118,8 +136,7 @@ namespace mes_text_tool
 		else 
 		{
 			bool enable_console_log{ false };
-			//mes::script::union_info_t input_script_info{};
-			const mes::script_info* input_script_info{ nullptr };
+			mes::script::union_info_t input_script_info{};
 			uint32_t input_code_page{ mes::scripts::defualt_code_page };
 
 			get_value_from_exename(argv[0], enable_console_log, input_script_info, input_code_page);

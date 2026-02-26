@@ -32,17 +32,23 @@ namespace mes
 		{
 			if (mes::is_advtxt(this->m_buffer))
 			{
+				if (this->m_view_info.advtxt_info() == nullptr)
+				{
+					this->m_view_info = mes::advtxt_info::get("");
+				}
+
 				this->m_data_view = mes::advtxt_view
 				{
-					std::span<uint8_t>{ this->m_buffer.data(), file_size }
+					std::span<uint8_t>{ this->m_buffer.data(), file_size },
+					this->m_view_info.advtxt_info()
 				};
 			}
 			else 
 			{
 				this->m_data_view = mes::script_view
-				{ 
+				{
 					std::span<uint8_t>{ this->m_buffer.data(), file_size },
-					this->m_script_info 
+					this->m_view_info.script_info()
 				};
 			}
 		}
@@ -54,7 +60,7 @@ namespace mes
 
 	auto script_helper::load(const std::wstring_view path, const bool check) noexcept -> script_helper&
 	{
-		this->m_script_view = {};
+		this->m_data_view = nullptr;
 		
 		if (path.empty())
 		{
@@ -71,7 +77,7 @@ namespace mes
 
 	auto script_helper::load(const std::u8string_view path, const bool check) noexcept -> script_helper&
 	{
-		this->m_script_view = {};
+		this->m_data_view = nullptr;
 		
 		if (path.empty())
 		{
@@ -191,12 +197,21 @@ namespace mes
 	auto script_helper::export_text(const bool absolute_file_offset) const noexcept -> std::vector<text_pair_t>
 	{
 		std::vector<script_helper::text_pair_t> result{};
+		if (!this->script_export(result, absolute_file_offset))
+		{
+			this->advtxt_export(result, absolute_file_offset);
+		}
+		return result;
+	}
 
+	auto script_helper::script_export(std::vector<text_pair_t>& texts, bool absolute_file_offset) const noexcept -> bool
+	{
 		const mes::script_view* script_view{ this->m_data_view.script_view() };
 		if (script_view != nullptr)
 		{
+			texts.clear();
 			const mes::script_info* info{ script_view->info() };
-			const mes::script_view::view_t<uint8_t>&    asmbin{ script_view->asmbin() };
+			const mes::script_view::view_t<uint8_t>& asmbin{ script_view->asmbin() };
 			const std::vector<mes::script_view::token>& tokens{ script_view->tokens() };
 
 			const int32_t base{ absolute_file_offset ? asmbin.offset() : 0 };
@@ -214,34 +229,52 @@ namespace mes
 					const auto offset{ static_cast<int32_t>(token.offset + base) };
 
 					std::ranges::for_each(text, [&](char& ch) {
-						ch += this->m_script_view.info()->enckey; // 解密字符串
-					});
+						ch += script_view->info()->enckey; // 解密字符串
+						});
 
-					result.push_back(text_pair_t{ offset, text });
+					texts.push_back(text_pair_t{ offset, text });
 				}
 				else if (token.opcode() != 0x00 && std::ranges::contains(info->opstrs, token.opcode()))
 				{
 					std::string  text{ token.string()->str };
 					const auto offset{ static_cast<int32_t>(token.offset + base) };
-					result.push_back(text_pair_t{ offset, text });
+					texts.push_back(text_pair_t{ offset, text });
 				}
 			}
+			return true;
 		}
-		else 
+
+		return false;
+	}
+
+	auto script_helper::advtxt_export(std::vector<text_pair_t>& texts, bool absolute_file_offset) const noexcept -> bool
+	{
+		const mes::advtxt::info* info{ this->m_view_info.advtxt_info() };
+		if (info != nullptr)
 		{
+			texts.clear();
 			const mes::advtxt_view* advtxt_view{ this->m_data_view.advtxt_view() };
 			if (advtxt_view != nullptr)
 			{
+				const int32_t base{ absolute_file_offset ? advtxt_view->asmbin().offset() : 0 };
 				const std::vector<mes::advtxt_view::token>& tokens{ advtxt_view->tokens() };
 
 				for (const mes::advtxt_view::token& token : tokens)
 				{
-					//mes::advtxt::string_parse(token);
+					if (!info->is_encstrs(token->opcode))
+					{
+						continue;
+					}
+
+					std::string  text{ mes::advtxt::string_parse(token) };
+					const auto offset{ static_cast<int32_t>(token.offset + base) };
+					texts.push_back(text_pair_t{ offset, text });
 				}
 			}
+			return true;
 		}
 
-		return result;
+		return false;
 	}
 
 	auto script_helper::import_text(const std::vector<text_pair_t>& texts, bool absolute_file_offset) noexcept -> bool 
@@ -310,7 +343,7 @@ namespace mes
 				{
 					std::string text{ it->text().string };
 					std::ranges::for_each(text, [&](char& ch) {
-						ch += this->m_script_view.info()->enckey; // 解密字符串
+						ch += script_view->info()->enckey; // 解密字符串
 					});
 					buffer.write(token.opcode()).write(text).write('\0');
 					continue;
@@ -348,7 +381,7 @@ namespace mes
 		this->m_data_view = mes::script_view
 		{ 
 			std::span<uint8_t>{ this->m_buffer.data(), this->m_buffer.count() },
-			this->m_script_info 
+			this->m_view_info.script_info()
 		};
 
 		return true;

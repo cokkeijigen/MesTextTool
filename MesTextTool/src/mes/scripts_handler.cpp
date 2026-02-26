@@ -17,167 +17,71 @@ namespace mes::scripts
 	{
 	}
 
-	auto scripts_handler::warning_because_file_not(const std::wstring_view path, const std::wstring_view 
-		type) const noexcept -> void
-	{
-		if (!this->m_logger)
-		{
-			return;
-		}
-
-		const auto message{ xstr::join(L"Skipped, because it is not a ", type, L"file:\n- ", path, L"\n") };
-		this->m_logger(message_level::warning, message);
-	}
-
-	auto scripts_handler::warning_because_directory(const std::wstring_view path) const noexcept -> void
-	{
-		if (!this->m_logger)
-		{
-			return;
-		}
-
-		constexpr wchar_t message[]{ L"Skipped, because it is a directory:\n- " };
-		this->m_logger(message_level::warning, xstr::join(message, path, L"\n"));
-	}
-
-	auto scripts_handler::error_mes_failed_to_parse(const std::wstring_view mes) const noexcept -> void
-	{
-		if (!this->m_logger)
-		{
-			return;
-		}
-
-		const auto info{ this->m_helper.script_view().info() };
-		if (info == nullptr)
-		{
-			constexpr wchar_t message[]
-			{
-				L"Failed to parse .mes file, unknown version."
-				"Please try specifying game name manually!\n- "
-			};
-			this->m_logger(message_level::error, xstr::join(message, mes, L"\n"));
-		}
-		else if (this->m_helper.script_info() != info)
-		{
-			const auto message = xstr::join
-			(
-				L"Failed to parse .mes file by \"",
-				xstr::cvt::to_utf16(info->name),
-				L"(auto-select)\", Please try specifying game name manually!\n- ",
-				mes, L"\n"
-			);
-			this->m_logger(message_level::error, message);
-		}
-		else
-		{
-			constexpr wchar_t message[]
-			{
-				L"Failed to parse .mes file, Unknown error, "
-				"Please retry specifying game name manually!\n- "
-			};
-			this->m_logger(message_level::error, xstr::join(message, mes, L"\n"));
-		}
-	}
-
-	auto scripts_handler::error_create_outdir_failed(const std::wstring_view path, const std::wstring_view name1,
-		const std::wstring_view name2) const noexcept -> void
-	{
-		if (!this->m_logger)
-		{
-			return;
-		}
-
-		const auto message = xstr::join
-		(
-			L"Failed to create output directory:", L"\n- ", path, 
-			L"\n- ", name1, L" <=> ", name2, L"\n"
-		);
-
-		this->m_logger(message_level::error, message);
-	}
-
-	auto scripts_handler::export_text(const std::wstring_view file, std::vector<const script_info*>& out_infos) const -> bool
+	auto scripts_handler::export_text(const std::wstring_view file, std::vector<mes::script::union_info_t>& output_infos) const -> bool
 	{
 		if (!xfsys::extname_check(file, L".mes"))
 		{
-			if (this->m_logger)
-			{
-				this->warning_because_file_not(file, L"mes");
-			}
-
 			return false;
 		}
 
 		if (!this->m_helper.load(file).is_parsed())
 		{
-			if (this->m_logger) { this->error_mes_failed_to_parse(file); }
 			return false;
 		}
 
-		const auto texts{ this->m_helper.export_text() };
-		const auto info { this->m_helper.script_view().info() };
-		const auto dirs { xstr::cvt::to_utf16(info->name).append(L"_text") };
-		const auto path { xfsys::path::join(this->m_output_directory, dirs) };
-
-		std::wstring txtname{};
+		std::wstring output_directory{};
 		{
-			auto name{ xfsys::path::name(file) };
-			auto const dot_pos{ name.find_last_of(L".") };
-			if (dot_pos != std::string::npos)
+			const mes::script::union_info_t info{ this->m_helper.data_view().info() };
+			const std::string_view name{ info.name() };
+			if (name.empty())
 			{
-				name = name.substr(0, dot_pos);
+				return false;
 			}
-			txtname.assign(xstr::join(name, L".txt"));
+			output_infos.push_back(info);
+			const std::wstring u16name{ xstr::cvt::to_utf16(name).append(L"_text") };
+			output_directory.assign(xfsys::path::join(this->m_output_directory, u16name));
 		}
-
-		if (!xfsys::create_directory(path, true))
+		
+		if (!xfsys::create_directory(output_directory, true))
 		{
-			if (this->m_logger)
-			{
-				this->error_create_outdir_failed(path, xfsys::path::name(file), txtname);
-			}
 			return false;
 		}
 
-		const auto output_file{ xfsys::path::join(path, txtname) };
-		const auto result{ mes::text::format_dump(output_file, texts, this->m_input_mes_code_page) };
-
-		if (this->m_logger)
+		std::wstring output_file_path{};
 		{
-			const auto desc   { result ? L"successful:" : L"failed, Unknown error:" };
-			const auto message{ xstr::join(L"Export ", desc, L"\n- raw: ", file, L"\n- out: ", output_file, L"\n") };
-			this->m_logger(result ? message_level::normal : message_level::error, message);
+			std::wstring_view name{ xfsys::path::name(file) };
+			const size_t dotpos{ name.find_last_of(L".") };
+			if (dotpos != std::string::npos)
+			{
+				name = name.substr(0, dotpos);
+			}
+			output_file_path.assign(xfsys::path::join(output_directory, xstr::join(name, L".txt")));
 		}
 
-		auto script_info{ this->m_helper.script_view().info() };
-		if (!std::ranges::contains(out_infos, script_info))
+		const std::vector<mes::script::text_pair_t> texts{ this->m_helper.export_text() };
+		const bool completed
 		{
-			out_infos.push_back(script_info);
-		}
+			mes::text::format_dump(output_file_path, texts, this->m_input_mes_code_page)
+		};
 
-		return result;
+		return completed;
 	}
 
 	auto scripts_handler::export_text_handle() const -> void
 	{
 		std::wstring_view input_path{};
-		std::vector<const script_info*> output_script_infos{};
+		std::vector<mes::script::union_info_t> output_script_infos{};
 
 		if (xfsys::is_directory(this->m_input_directory_or_file))
 		{
 			input_path = this->m_input_directory_or_file;
 			for (const auto& entry : xfsys::dir::iter(this->m_input_directory_or_file))
 			{
-				if (entry.is_file())
+				if (!entry.is_file())
 				{
-					this->export_text(xstr::trim(entry.full_path()), output_script_infos);
 					continue;
 				}
-
-				if (this->m_logger) 
-				{
-					this->warning_because_directory(entry.full_path());
-				}
+				this->export_text(xstr::trim(entry.full_path()), output_script_infos);
 			}
 		}
 		else if(xfsys::is_file(this->m_input_directory_or_file))
@@ -192,27 +96,11 @@ namespace mes::scripts
 		}
 
 		const mes::config config { .input_path{ input_path }};
-		for (const auto& info : output_script_infos)
+		for (const mes::script::union_info_t& info : output_script_infos)
 		{
-			const auto dirs{ xstr::cvt::to_utf16(xstr::join(info->name, "_text")) };
-			const auto path{ xfsys::path::join(this->m_output_directory, dirs)};
-			const auto make_config{ mes::config::create(path, config) };
-			if (!this->m_logger)
-			{
-				continue;
-			}
-
-			const auto config_path{ xfsys::path::join(path, mes::config::defuat_name()) };
-			if (make_config)
-			{
-				constexpr wchar_t message[]{ L"Created configuration file:\n- " };
-				this->m_logger(message_level::normal, xstr::join(message, config_path, L"\n"));
-			}
-			else
-			{
-				constexpr wchar_t message[]{ L"Failed to create configuration file:\n- " };
-				this->m_logger(message_level::warning, xstr::join(message, config_path, L"\n"));
-			}
+			const std::wstring dirs{ xstr::cvt::to_utf16(xstr::join(info.name(), "_text")) };
+			const std::wstring path{ xfsys::path::join(this->m_output_directory, dirs)     };
+			const bool is_make_config{ mes::config::create(path, config) };
 		}
 	}
 
@@ -244,19 +132,11 @@ namespace mes::scripts
 		{
 			if (entry.is_directory())
 			{
-				if (this->m_logger)
-				{
-					this->warning_because_directory(entry.full_path());
-				}
 				continue;
 			}
 
 			if (!xfsys::extname_check(entry.name(), L".txt"))
 			{
-				if (this->m_logger)
-				{
-					this->warning_because_file_not(entry.full_path(), L"txt");
-				}
 				continue;
 			}
 			
@@ -298,30 +178,19 @@ namespace mes::scripts
 
 			if (!this->m_helper.load(path_mes).is_parsed())
 			{
-				if (this->m_logger) { this->error_mes_failed_to_parse(path_mes); }
 				continue;
 			}
 
 			const auto imported{ this->m_helper.import_text(texts) };
 			if (!imported)
 			{
-				if (this->m_logger)
-				{
-					constexpr wchar_t message[]{ L"Failed to import text into .mes file!\n- " };
-					this->m_logger(message_level::error, xstr::join(message, path_txt, L"\n- ", path_mes, L"\n"));
-				}
 				continue;
 			}
 
-			const auto info{ this->m_helper.script_view().info() };
-			const auto dirs{ xstr::cvt::to_utf16(info->name).append(L"_mes")   };
+			const auto dirs{ xstr::cvt::to_utf16(this->m_helper.get_info_name()).append(L"_mes")   };
 			const auto path{ xfsys::path::join(this->m_output_directory, dirs) };
 			if (!xfsys::create_directory(path))
 			{
-				if (this->m_logger)
-				{
-					this->error_create_outdir_failed(path, entry.name(), mesname);
-				}
 				continue;
 			}
 			
@@ -354,9 +223,9 @@ namespace mes::scripts
 		}
 	}
 
-	auto scripts_handler::set_script_info(const script_info* const script_info) noexcept -> scripts_handler&
+	auto scripts_handler::set_script_info(const mes::script::helper::union_info_t info) noexcept -> scripts_handler&
 	{
-		this->m_helper.using_script_info(script_info);
+		this->m_helper.using_script_info(info);
 		return *this;
 	}
 

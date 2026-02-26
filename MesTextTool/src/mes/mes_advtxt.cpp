@@ -3,32 +3,48 @@
 
 namespace mes 
 {
-	const char* const advtxt_info::supports[]
+
+	const char* const advtxt_info::advtxt_supports[]
 	{
 		"utaeho4", "infantaria", "suikademo"
 	};
 
-	const advtxt_info advtxt_info::infos[]
+	std::vector<advtxt_info> advtxt_info::advtxt_infos
 	{
 		{ "advtxt"   , { 0x00       } },  // default
 		{ "utaeho4"  , { 0x00, 0x1A } },
 		{ "suikademo", { 0x00, 0x16 } }
 	};
 
+	auto advtxt_info::supports() -> const std::span<const char* const>
+	{
+		return std::span<const char* const>{ std::begin(advtxt_supports), std::end(advtxt_supports) };
+	}
+
+	auto advtxt_info::infos() -> const std::vector<advtxt_info>&
+	{
+		return advtxt_info::advtxt_infos;
+	}
+
 	auto advtxt_info::get(const std::string_view name) -> const advtxt_info*
 	{
-		static std::string temp_name{};
-		static advtxt_info temp_info{ advtxt_info::infos[0] };
-
 		if (name.empty())
 		{
-			return &advtxt_info::infos[0];
+			return &advtxt_info::advtxt_infos[0];
+		}
+
+		for (const auto& info : advtxt_info::advtxt_infos)
+		{
+			if (info.name == name)
+			{
+				return &info;
+			}
 		}
 
 		const bool is_supported = std::any_of
 		(
-			std::begin(advtxt_info::supports),
-			std::end(advtxt_info::supports),
+			std::begin(advtxt_info::advtxt_supports),
+			std::end(advtxt_info::advtxt_supports),
 			[name](const char* s)
 			{
 				return s != nullptr && name == s;
@@ -40,21 +56,40 @@ namespace mes
 			return nullptr;
 		}
 
-		for (const auto& info : advtxt_info::infos)
+		advtxt_infos.push_back(advtxt_info
 		{
-			if (info.name == name)
-			{
-				return &info;
-			}
-		}
+			.name    = std::string{ name },
+			.encstrs = advtxt_info::advtxt_infos[0].encstrs
+		});
 
-		temp_name.assign(name);
-		temp_info.name = temp_name.data();
-		return &temp_info;
+		return &advtxt_infos.back();
 	}
 
-	advtxt_view::advtxt_view(const std::span<uint8_t> raw) noexcept 
-		: m_raw{ raw, 0x00 }
+	auto advtxt_info::make(std::string_view name, std::vector<uint8_t>&& encstrs) -> const advtxt_info*
+	{
+
+		for (const auto& info : advtxt_info::advtxt_infos)
+		{
+			if (info.name != name)
+			{
+				continue;
+			}
+			std::vector<uint8_t>& encstrs{ *const_cast<std::vector<uint8_t>*>(&info.encstrs) };
+			encstrs = std::move(encstrs);
+			return &info;
+		}
+
+		advtxt_infos.push_back(advtxt_info
+		{
+			.name    = std::string{ name },
+			.encstrs = std::move(encstrs)
+		});
+
+		return &advtxt_infos.back();
+	}
+
+	advtxt_view::advtxt_view(const std::span<uint8_t> raw, const advtxt_info* info) noexcept
+		: m_raw{ raw, 0x00 }, m_info{ info }
 	{
 		if (raw.size() < sizeof(advtxt_view::magic) || raw.data() == nullptr)
 		{
@@ -67,7 +102,7 @@ namespace mes
 			return;
 		}
 
-		const size_t offset{ (header->entry.count * 2) + sizeof(advtxt_view::magic) };
+		const size_t offset{ (header->entries.count * 2) + sizeof(advtxt_view::magic) };
 		this->m_asmbin = view_t<uint8_t>
 		{
 			std::span<uint8_t> { raw.data() + offset, raw.size() - offset },

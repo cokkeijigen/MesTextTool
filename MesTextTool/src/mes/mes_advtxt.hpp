@@ -5,15 +5,23 @@
 
 namespace mes
 {
-	struct advtxt_info
+	class advtxt_info
 	{
-		const char* name;
-		const std::initializer_list<uint8_t> encstrs; // the opcode for encrypted strings in scene text
+		static std::vector<advtxt_info> advtxt_infos;
+		static const char* const advtxt_supports[];
+
+	public:
+		
+		const std::string name;
+		const std::vector<uint8_t> encstrs; // the opcode for encrypted strings in scene text
+
 		inline auto is_encstrs(uint8_t value) const noexcept -> bool;
 
-		static const char* const supports[];
-		static const advtxt_info infos[];
-		static auto get(const std::string_view name) -> const advtxt_info*;
+		static auto   get(const std::string_view name) -> const advtxt_info*;
+		static auto  make(std::string_view name, std::vector<uint8_t>&& encstrs) -> const advtxt_info*;
+
+		static auto infos() -> const std::vector<advtxt_info>&;
+		static auto supports() -> const std::span<const char* const>;
 	};
 
 	class advtxt_view
@@ -29,6 +37,11 @@ namespace mes
 			struct value_t { uint8_t opcode, data[]; };
 			#pragma pack(pop)
 
+			inline auto operator->() const noexcept -> const value_t* 
+			{
+				return reinterpret_cast<const value_t*>(this->data);
+			}
+
 			inline auto value() const noexcept -> const value_t*
 			{
 				return reinterpret_cast<const value_t*>(this->data);
@@ -43,7 +56,7 @@ namespace mes
 			{
 				int32_t   count;
 				uint16_t data[];
-			} entry;
+			} entries;
 		};
 		#pragma pack(pop)
 
@@ -99,7 +112,7 @@ namespace mes
 		static constexpr const uint8_t magic[8]{ '#', 'A','D','V','_','T','X', 'T' };
 
 		advtxt_view() noexcept = default;
-		advtxt_view(const std::span<uint8_t> raw) noexcept;
+		advtxt_view(const std::span<uint8_t> raw, const advtxt_info* info) noexcept;
 
 		inline auto is_parsed() const noexcept -> bool;
 
@@ -107,13 +120,12 @@ namespace mes
 		inline auto asmbin() const noexcept -> const view_t<uint8_t>&;
 		inline auto tokens() const noexcept -> const std::vector<token>&;
 		inline auto header() const noexcept -> const header_t*;
-
+		inline auto info  () const noexcept -> const advtxt_info*;
 	protected:
-
-		mutable view_t<uint8_t>    m_raw{};
+		const   advtxt_info*       m_info{};
+		mutable view_t<uint8_t>    m_raw {};
 		mutable view_t<uint8_t>    m_asmbin{};
 		mutable std::vector<token> m_tokens{};
-
 		auto token_parse() noexcept -> void;
 	};
 
@@ -140,6 +152,11 @@ namespace mes
 	inline auto advtxt_view::header() const noexcept -> const header_t*
 	{
 		return reinterpret_cast<const header_t*>(this->m_raw.data());
+	}
+
+	inline auto advtxt_view::info() const noexcept -> const advtxt_info*
+	{
+		return this->m_info;
 	}
 
 	inline auto advtxt_info::is_encstrs(uint8_t value) const noexcept -> bool

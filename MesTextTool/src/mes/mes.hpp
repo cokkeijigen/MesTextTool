@@ -236,30 +236,48 @@ namespace mes
 			}
 		};
 
-		class union_view_t
+		class union_info_t 
 		{
 		public:
+			using variant = std::variant<std::nullptr_t, const mes::script_info*, const mes::advtxt_info*>;
 
-			using variant = std::variant<mes::script_view, mes::advtxt_view>;
+			inline auto script_info() const noexcept -> const mes::script_info*;
+			inline auto advtxt_info() const noexcept -> const mes::advtxt_info*;
 
-			auto script_view() const noexcept -> const mes::script_view*;
-			auto advtxt_view() const noexcept -> const mes::advtxt_view*;
+			inline union_info_t() noexcept : m_value{ nullptr } {};
+			inline union_info_t(std::nullptr_t) noexcept : m_value{ nullptr } {};
+			inline union_info_t(const mes::script_info* script_info) noexcept;
+			inline union_info_t(const mes::advtxt_info* advtxt_info) noexcept;
 
-			inline union_view_t() noexcept = default;
-			union_view_t(mes::script_view&& script_view) noexcept;
-			union_view_t(mes::advtxt_view&& advtxt_view) noexcept;
-
-			auto operator=(mes::script_view&& script_view) noexcept -> union_view_t&;
-			auto operator=(mes::advtxt_view&& advtxt_view) noexcept -> union_view_t&;
-
+			inline auto empty() const noexcept -> bool;
+			inline auto  name() const noexcept -> std::string_view;
+			inline auto operator=(const mes::script_info* script_info) noexcept -> union_info_t&;
+			inline auto operator=(const mes::advtxt_info* advtxt_info) noexcept -> union_info_t&;
+			inline auto operator=(std::nullptr_t) noexcept -> union_info_t&;
 		protected:
 			variant m_value{};
 		};
 
-		class union_info_t 
+		class union_view_t
 		{
 		public:
-			using variant = std::variant<const mes::script_info*, const mes::advtxt_info*>;
+
+			using variant = std::variant<std::nullptr_t, mes::script_view, mes::advtxt_view>;
+
+			inline auto script_view() const noexcept -> const mes::script_view*;
+			inline auto advtxt_view() const noexcept -> const mes::advtxt_view*;
+
+			inline union_view_t() noexcept: m_value{ nullptr } {};
+			inline union_view_t(std::nullptr_t) noexcept: m_value{ nullptr } {};
+
+			inline union_view_t(mes::script_view&& script_view) noexcept;
+			inline union_view_t(mes::advtxt_view&& advtxt_view) noexcept;
+
+			inline auto empty() const noexcept -> bool;
+			inline auto info () const noexcept -> union_info_t;
+			inline auto operator=(mes::script_view&& script_view) noexcept -> union_view_t&;
+			inline auto operator=(mes::advtxt_view&& advtxt_view) noexcept -> union_view_t&;
+			inline auto operator=(std::nullptr_t) noexcept -> union_view_t&;
 
 		protected:
 			variant m_value{};
@@ -268,13 +286,13 @@ namespace mes
 		inline script_helper () noexcept {};
 		inline ~script_helper() noexcept {};
 
+		script_helper(const union_info_t            using_script_info) noexcept;
 		script_helper(const std::string_view   using_script_info_name) noexcept;
-		script_helper(const mes::script_info* const using_script_info) noexcept;
 
 		auto is_parsed() const noexcept -> bool;
-		auto script_view() const noexcept -> const mes::script_view&;
-		auto script_info() const noexcept -> const mes::script_info* const;
-		auto using_script_info(const mes::script_info* const info) noexcept -> script_helper&;
+		auto data_view() const noexcept -> const union_view_t&;
+		auto view_info() const noexcept -> const union_info_t&;
+		auto using_script_info(const union_info_t info) noexcept -> script_helper&;
 
 		auto load(const xfsys::file& file) noexcept -> script_helper&;
 		auto load(const std::wstring_view  path, const bool check = true) noexcept -> script_helper&;
@@ -293,15 +311,19 @@ namespace mes
 		auto export_text(const bool absolute_file_offset = true) const noexcept -> std::vector<text_pair_t>;
 		auto import_text(const std::vector<text_pair_t>& texts, bool absolute_file_offset = true) noexcept -> bool;
 
+		auto get_info_name() const noexcept -> std::string_view;
+
 	protected:
 
 		auto advtxt_import(const std::vector<text_pair_t>& texts, bool absolute_file_offset) noexcept -> bool;
 		auto script_import(const std::vector<text_pair_t>& texts, bool absolute_file_offset) noexcept -> bool;
 
-		const  mes::script_info* m_script_info{};
-		mutable mes::script_view m_script_view{};
-		mutable xmem::buffer<uint8_t> m_buffer{};
+		auto script_export(std::vector<text_pair_t>& texts, bool absolute_file_offset) const noexcept -> bool;
+		auto advtxt_export(std::vector<text_pair_t>& texts, bool absolute_file_offset) const noexcept -> bool;
+
+		mutable union_info_t m_view_info{};
 		mutable union_view_t m_data_view{};
+		mutable xmem::buffer<uint8_t> m_buffer{};
 	};
 
 
@@ -429,34 +451,179 @@ namespace mes
 		return *this;
 	}
 
-	inline script_helper::script_helper(const std::string_view using_script_info_name) noexcept
-		: m_script_info{ script_info::query(using_script_info_name) }
+	inline auto script_helper::union_view_t::operator=(std::nullptr_t) noexcept -> union_view_t&
 	{
+		this->m_value = nullptr;
+		return *this;
 	}
 
-	inline script_helper::script_helper(const mes::script_info* const using_script_info) noexcept
-		: m_script_info{ using_script_info }
+	inline auto script_helper::union_view_t::empty() const noexcept -> bool
+	{
+		return this->m_value.index() == 0 || this->m_value.valueless_by_exception();
+	}
+
+	inline auto script_helper::union_view_t::info() const noexcept -> union_info_t
+	{
+		if (auto&& value = std::get_if<mes::script_view>(&this->m_value))
+		{
+			return value->info();
+		}
+		
+		if (auto&& value = std::get_if<mes::advtxt_view>(&this->m_value))
+		{
+			return value->info();
+		}
+
+		return nullptr;
+	}
+
+	inline auto script_helper::union_info_t::advtxt_info() const noexcept -> const mes::advtxt_info*
+	{
+		if (auto&& value = std::get_if<const mes::advtxt_info*>(&this->m_value))
+		{
+			return *value;
+		}
+		return nullptr;
+	}
+
+	inline auto script_helper::union_info_t::script_info() const noexcept -> const mes::script_info*
+	{
+		if (auto&& value = std::get_if<const mes::script_info*>(&this->m_value))
+		{
+			return *value;
+		}
+		return nullptr;
+	}
+
+	inline script_helper::union_info_t::union_info_t(const mes::script_info* script_info) noexcept
+	{
+		this->m_value = script_info;
+	}
+
+	inline script_helper::union_info_t::union_info_t(const mes::advtxt_info* advtxt_info) noexcept
+	{
+		this->m_value = advtxt_info;
+	}
+
+	inline auto script_helper::union_info_t::operator=(const mes::script_info* script_info) noexcept -> union_info_t&
+	{
+		this->m_value = script_info;
+		return *this;
+	}
+
+	inline auto script_helper::union_info_t::operator=(const mes::advtxt_info* advtxt_info) noexcept -> union_info_t&
+	{
+		this->m_value = advtxt_info;
+		return *this;
+	}
+
+	inline auto script_helper::union_info_t::operator=(std::nullptr_t) noexcept -> union_info_t&
+	{
+		this->m_value = nullptr;
+		return *this;
+	}
+
+	inline auto script_helper::union_info_t::empty() const noexcept -> bool 
+	{
+		return this->m_value.index() == 0 || this->m_value.valueless_by_exception();
+	}
+
+	inline auto script_helper::union_info_t::name() const noexcept -> std::string_view
+	{
+		if (!this->empty())
+		{
+			if (auto&& value = std::get_if<const mes::script_info*>(&this->m_value))
+			{
+				return (*value)->name;
+			}
+			if (auto&& value = std::get_if<const mes::advtxt_info*>(&this->m_value))
+			{
+				return (*value)->name;
+			}
+		}
+		return "";
+	}
+
+	inline script_helper::script_helper(const std::string_view using_script_info_name) noexcept
+	{
+		const mes::script_info* script_info{ script_info::query(using_script_info_name) };
+		if (script_info != nullptr)
+		{
+			this->m_view_info = script_info;
+			return;
+		}
+
+		const mes::advtxt_info* advtxt_info{ mes::advtxt_info::get(using_script_info_name) };
+		if (advtxt_info != nullptr)
+		{
+			this->m_view_info = advtxt_info;
+		}
+	}
+
+	inline script_helper::script_helper(const union_info_t using_script_info) noexcept
+		: m_view_info{ using_script_info }
 	{
 	}
 
 	inline auto script_helper::is_parsed() const noexcept -> bool
 	{
-		return !this->m_script_view.tokens().empty();
+		const auto script_view{ this->m_data_view.script_view() };
+		if (script_view != nullptr && !script_view->tokens().empty())
+		{
+			return true;
+		}
+
+		const auto advtxt_view{ this->m_data_view.advtxt_view() };
+		if (advtxt_view != nullptr && !advtxt_view->tokens().empty())
+		{
+			return true;
+		}
+
+		return false;
 	}
 
-	inline auto script_helper::script_view() const noexcept -> const mes::script_view&
+	inline auto script_helper::get_info_name() const noexcept -> std::string_view
 	{
-		return this->m_script_view;
+		if (this->m_view_info.empty())
+		{
+			const auto script_view{ this->data_view().script_view() };
+			if (script_view != nullptr)
+			{
+				const auto info{ script_view->info() };
+				return info != nullptr ? info->name : "";
+			}
+		}
+		else
+		{
+			const auto script_info{ this->m_view_info.script_info() };
+			if(script_info != nullptr)
+			{
+				return script_info->name;
+			}
+
+			const auto advtxt_info{ this->m_view_info.advtxt_info() };
+			if(advtxt_info != nullptr)
+			{
+				return advtxt_info->name;
+			}
+		}
+
+		return "";
 	}
 
-	inline auto script_helper::script_info() const noexcept -> const mes::script_info* const
+	inline auto script_helper::data_view() const noexcept -> const union_view_t&
 	{
-		return this->m_script_info;
+		return this->m_data_view;
 	}
 
-	inline auto script_helper::using_script_info(const mes::script_info* const info) noexcept -> mes::script_helper&
+	inline auto script_helper::view_info() const noexcept -> const union_info_t&
 	{
-		this->m_script_info = info;
+		return this->m_view_info;
+	}
+
+	inline auto script_helper::using_script_info(const union_info_t info) noexcept -> mes::script_helper&
+	{
+		this->m_view_info = info;
 		return *this;
 	}
 
