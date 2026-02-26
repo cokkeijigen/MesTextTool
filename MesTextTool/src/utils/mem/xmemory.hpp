@@ -209,7 +209,7 @@ namespace utils::xmem {
 	requires (sizeof(T) == sizeof(elem_t))
 	inline auto buffer<elem_t>::write(const T* data, size_t count) -> buffer&
 	{
-		return this->write(std::span<T>{ data, count});
+		return this->write(std::span<const T>{ data, count });
 	}
 
 	template<class elem_t>
