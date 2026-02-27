@@ -1,7 +1,7 @@
 #include <iostream>
 #include <mes_advtxt.hpp>
 
-namespace mes 
+namespace mes::advtxt
 {
 
 	const char* const advtxt_info::advtxt_supports[]
@@ -132,7 +132,7 @@ namespace mes
 
 			this->m_tokens.push_back
 			(
-				advtxt_view::token
+				advtxt::token
 				{
 					.data   = this->m_asmbin.data() + current,
 					.offset = static_cast<int32_t>(current),
@@ -151,12 +151,12 @@ namespace mes
 
 	auto is_advtxt(const std::span<const uint8_t> data) -> bool 
 	{
-		if (data.size() < sizeof(mes::advtxt_view::header_t) || data.data() == nullptr)
+		if (data.size() < sizeof(advtxt::header_t) || data.data() == nullptr)
 		{
 			return false;
 		}
 
-		const auto header{ reinterpret_cast<const mes::advtxt_view::header_t*>(data.data()) };
+		const auto header{ reinterpret_cast<const mes::advtxt::header_t*>(data.data()) };
 		const auto result{ std::memcmp(header->magic, mes::advtxt::magic, sizeof(mes::advtxt::magic)) };
 		return result == 0;
 	}
@@ -193,7 +193,7 @@ namespace mes
 		});
 	}
 
-	auto advtxt::string_parse(const view::token& token) -> std::string
+	auto advtxt::string_parse(const advtxt::token& token) -> std::string
 	{
 		if (token.data != nullptr && token.length > 1)
 		{

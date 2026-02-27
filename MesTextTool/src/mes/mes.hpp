@@ -7,6 +7,8 @@
 
 namespace mes 
 {
+	using advtxt_view = advtxt::view;
+	using advtxt_info = advtxt::info;
 
 	namespace text 
 	{

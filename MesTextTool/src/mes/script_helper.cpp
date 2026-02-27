@@ -31,7 +31,7 @@ namespace mes
 		const size_t bytes_read{ file.read(this->m_buffer, file_size, xfsys::file::pos::begin, 0) };
 		if (bytes_read == file_size)
 		{
-			if (mes::is_advtxt(this->m_buffer))
+			if (mes::advtxt::is_advtxt(this->m_buffer))
 			{
 				if (this->m_view_info.advtxt_info() == nullptr)
 				{
@@ -433,7 +433,7 @@ namespace mes
 		// Copy the header bytes of the raw data.
 		buffer.write(advtxt_view->raw().data(), asmbin.offset());
 
-		for (const advtxt_view::token& token : tokens)
+		for (const advtxt::token& token : tokens)
 		{
 			if (info->is_encstrs(token->opcode))
 			{

@@ -3,8 +3,40 @@
 #include <vector>
 #include <algorithm>
 
-namespace mes
+namespace mes::advtxt
 {
+	struct token
+	{
+		const uint8_t*      data{};
+		int32_t offset{}, length{};
+
+		#pragma pack(push, 1)
+		struct value_t { uint8_t opcode, data[]; };
+		#pragma pack(pop)
+
+		inline auto operator->() const noexcept -> const value_t* 
+		{
+			return reinterpret_cast<const value_t*>(this->data);
+		}
+
+		inline auto value() const noexcept -> const value_t*
+		{
+			return reinterpret_cast<const value_t*>(this->data);
+		}
+	};
+
+	#pragma pack(push, 1)
+	struct header_t
+	{
+		uint8_t magic[8]; // #ADV_TXT
+		struct
+		{
+			int32_t   count;
+			uint16_t data[];
+		} entries;
+	};
+	#pragma pack(pop)
+
 	class advtxt_info
 	{
 		static std::vector<advtxt_info> advtxt_infos;
@@ -23,43 +55,13 @@ namespace mes
 		static auto infos() -> const std::vector<advtxt_info>&;
 		static auto supports() -> const std::span<const char* const>;
 	};
-
+	
 	class advtxt_view
 	{
 	public:
 
-		struct token
-		{
-			const uint8_t*      data{};
-			int32_t offset{}, length{};
-
-		    #pragma pack(push, 1)
-			struct value_t { uint8_t opcode, data[]; };
-			#pragma pack(pop)
-
-			inline auto operator->() const noexcept -> const value_t* 
-			{
-				return reinterpret_cast<const value_t*>(this->data);
-			}
-
-			inline auto value() const noexcept -> const value_t*
-			{
-				return reinterpret_cast<const value_t*>(this->data);
-			}
-		};
-
-		#pragma pack(push, 1)
-		struct header_t
-		{
-			uint8_t magic[8]; // #ADV_TXT
-			struct
-			{
-				int32_t   count;
-				uint16_t data[];
-			} entries;
-		};
-		#pragma pack(pop)
-
+		using token = advtxt::token;
+		
 		template<class T>
 		class view_t : public std::span<T>
 		{
@@ -164,15 +166,12 @@ namespace mes
 
 	auto is_advtxt(const std::span<const uint8_t> data) -> bool;
 
-	namespace advtxt 
-	{
-		using view = advtxt_view;
-		using info = advtxt_info;
-		inline static constexpr const uint8_t endtoken[2]{ 0x0A, 0x0D };
-		static inline constexpr const uint8_t magic   [8]{ '#', 'A','D','V','_','T','X', 'T' };
+	using view = advtxt_view;
+	using info = advtxt_info;
+	inline static constexpr const uint8_t endtoken[2]{ 0x0A, 0x0D };
+	static inline constexpr const uint8_t magic[8]{ '#', 'A','D','V','_','T','X', 'T' };
 
-		auto string_encdec(const std::span<const uint8_t> str) -> std::string;
-		auto string_encdec(const std::string_view str) -> std::string;
-		auto string_parse (const view::token&   token) -> std::string;
-	}
+	auto string_encdec(const std::span<const uint8_t> str) -> std::string;
+	auto string_encdec(const std::string_view str) -> std::string;
+	auto string_parse (const token& token) -> std::string;
 }
