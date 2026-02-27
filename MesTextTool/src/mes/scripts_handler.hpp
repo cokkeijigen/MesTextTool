@@ -23,7 +23,7 @@ namespace mes::scripts
 
 		auto export_text_handle() const -> void;
 
-		auto export_text(const std::wstring_view path, std::vector<mes::script::union_info_t>& output_infos) const -> bool;
+		auto export_text(const std::wstring_view path, std::vector<mes::unioninfo>& output_infos) const -> bool;
 
 		public:
 
@@ -35,7 +35,7 @@ namespace mes::scripts
 		
 		scripts_handler(std::u8string_view input_directory_or_file, std::u8string_view output_directory) noexcept;
 
-		auto set_script_info(const mes::script::helper::union_info_t info) noexcept -> scripts_handler&;
+		auto set_script_info(const mes::unioninfo info) noexcept -> scripts_handler&;
 
 		auto set_mes_code_page(const uint32_t code_page) noexcept -> scripts_handler&;
 

@@ -17,7 +17,7 @@ namespace mes::scripts
 	{
 	}
 
-	auto scripts_handler::export_text(const std::wstring_view file, std::vector<mes::script::union_info_t>& output_infos) const -> bool
+	auto scripts_handler::export_text(const std::wstring_view file, std::vector<mes::unioninfo>& output_infos) const -> bool
 	{
 		if (!xfsys::extname_check(file, L".mes"))
 		{
@@ -31,7 +31,7 @@ namespace mes::scripts
 
 		std::wstring output_directory{};
 		{
-			const mes::script::union_info_t info{ this->m_helper.data_view().info() };
+			const mes::unioninfo info{ this->m_helper.data_view().info() };
 			const std::string_view name{ info.name() };
 			if (name.empty())
 			{
@@ -58,7 +58,7 @@ namespace mes::scripts
 			output_file_path.assign(xfsys::path::join(output_directory, xstr::join(name, L".txt")));
 		}
 
-		const std::vector<mes::script::text_pair_t> texts{ this->m_helper.export_text() };
+		const std::vector<mes::text::entry> texts{ this->m_helper.export_text() };
 		const bool completed
 		{
 			mes::text::format_dump(output_file_path, texts, this->m_input_mes_code_page)
@@ -70,7 +70,7 @@ namespace mes::scripts
 	auto scripts_handler::export_text_handle() const -> void
 	{
 		std::wstring_view input_path{};
-		std::vector<mes::script::union_info_t> output_script_infos{};
+		std::vector<mes::unioninfo> output_script_infos{};
 
 		if (xfsys::is_directory(this->m_input_directory_or_file))
 		{
@@ -96,7 +96,7 @@ namespace mes::scripts
 		}
 
 		const mes::config config { .input_path{ input_path }};
-		for (const mes::script::union_info_t& info : output_script_infos)
+		for (const mes::unioninfo& info : output_script_infos)
 		{
 			const std::wstring dirs{ xstr::cvt::to_utf16(xstr::join(info.name(), "_text")) };
 			const std::wstring path{ xfsys::path::join(this->m_output_directory, dirs)     };
@@ -187,7 +187,7 @@ namespace mes::scripts
 				continue;
 			}
 
-			const auto dirs{ xstr::cvt::to_utf16(this->m_helper.get_info_name()).append(L"_mes")   };
+			const auto dirs{ xstr::cvt::to_utf16(this->m_helper.last_info_name()).append(L"_mes")   };
 			const auto path{ xfsys::path::join(this->m_output_directory, dirs) };
 			if (!xfsys::create_directory(path))
 			{
@@ -223,7 +223,7 @@ namespace mes::scripts
 		}
 	}
 
-	auto scripts_handler::set_script_info(const mes::script::helper::union_info_t info) noexcept -> scripts_handler&
+	auto scripts_handler::set_script_info(const mes::unioninfo info) noexcept -> scripts_handler&
 	{
 		this->m_helper.using_script_info(info);
 		return *this;

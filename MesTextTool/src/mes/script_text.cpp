@@ -214,7 +214,7 @@ namespace mes::text
 		text = std::move(buffer.string(this->m_config.use_code_page));
 	}
 
-	auto parse_format(const xfsys::file& file, std::vector<script::text_pair_t>& output, const text::formater& formater) -> void
+	auto parse_format(const xfsys::file& file, std::vector<entry>& output, const text::formater& formater) -> void
 	{
 		output.clear();
 
@@ -270,13 +270,13 @@ namespace mes::text
 			std::string text{ _line->substr(pos + 6) };
 			
 			formater.format(text, CP_UTF8);
-			output.push_back(script::text_pair_t{ offset, text });
+			output.push_back(entry{ offset, text });
 
 			offset = -1;
 		}
 	}
 
-	auto format_dump(const xfsys::file& file, const std::vector<script::text_pair_t>& input, const int32_t input_code_page) -> bool
+	auto format_dump(const xfsys::file& file, const std::vector<entry>& input, const int32_t input_code_page) -> bool
 	{
 		if (!file.is_open())
 		{
@@ -286,14 +286,16 @@ namespace mes::text
 		xstr::string_buffer buffer{}, this_line{};
 		for (const auto&& [i, line] : std::views::enumerate(input))
 		{
-			if (line.text().string.empty())
+			std::string* const entry_string{ line.string() };
+
+			if (entry_string == nullptr || entry_string->empty())
 			{
 				continue;
 			}
 
 			buffer.write_as_format("#0x%X\n", line.offset());
 			
-			this_line.reset().write(line->text.string).replace("\n", "\\n");
+			this_line.reset().write(*entry_string).replace("\n", "\\n");
 			
 			this_line.convert_to_utf8(input_code_page);
 
@@ -308,39 +310,39 @@ namespace mes::text
 		return result;
 	}
 
-	auto parse_format(const xfsys::file& file, const text::formater& formater) -> std::vector<script::text_pair_t>
+	auto parse_format(const xfsys::file& file, const text::formater& formater) -> std::vector<entry>
 	{
-		std::vector<script::text_pair_t> result{};
+		std::vector<entry> result{};
 		text::parse_format(file, result, formater);
 		return result;
 	}
 
-	auto parse_format(const std::wstring_view path, std::vector<script::text_pair_t>& output, const text::formater& formater) -> void
+	auto parse_format(const std::wstring_view path, std::vector<entry>& output, const text::formater& formater) -> void
 	{
 		text::parse_format(xfsys::open(path, xfsys::read, false), output, formater);
 	}
 
-	auto parse_format(const std::u8string_view path, std::vector<script::text_pair_t>& output, const text::formater& formater) -> void
+	auto parse_format(const std::u8string_view path, std::vector<entry>& output, const text::formater& formater) -> void
 	{
 		text::parse_format(xfsys::open(path, xfsys::read, false), output, formater);
 	}
 
-	auto parse_format(const std::wstring_view path, const text::formater& formater) -> std::vector<script::text_pair_t>
+	auto parse_format(const std::wstring_view path, const text::formater& formater) -> std::vector<entry>
 	{
 		return text::parse_format(xfsys::open(path, xfsys::read, false), formater);
 	}
 
-	auto parse_format(const std::u8string_view path, const text::formater& formater) -> std::vector<script::text_pair_t>
+	auto parse_format(const std::u8string_view path, const text::formater& formater) -> std::vector<entry>
 	{
 		return text::parse_format(xfsys::open(path, xfsys::read, false), formater);
 	}
 
-	auto format_dump(const std::u8string_view path, const std::vector<script::text_pair_t>& input, const int32_t input_code_page) -> bool
+	auto format_dump(const std::u8string_view path, const std::vector<entry>& input, const int32_t input_code_page) -> bool
 	{
 		return text::format_dump(xfsys::create(path), input, input_code_page);
 	}
 
-	auto format_dump(const std::wstring_view path, const std::vector<script::text_pair_t>& input, const int32_t input_code_page) -> bool
+	auto format_dump(const std::wstring_view path, const std::vector<entry>& input, const int32_t input_code_page) -> bool
 	{
 		return text::format_dump(xfsys::create(path), input, input_code_page);
 	}

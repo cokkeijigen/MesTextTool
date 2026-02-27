@@ -161,7 +161,7 @@ namespace mes
 		return result == 0;
 	}
 
-	auto advtxt::string_codec(const std::span<const uint8_t> str) -> std::string
+	auto advtxt::string_encdec(const std::span<const uint8_t> str) -> std::string
 	{
 		if (str.empty()) return {};
 
@@ -184,9 +184,9 @@ namespace mes
 		return result;
 	}
 
-	auto advtxt::string_codec(const std::string_view str) -> std::string
+	auto advtxt::string_encdec(const std::string_view str) -> std::string
 	{
-		return advtxt::string_codec(std::span
+		return advtxt::string_encdec(std::span
 		{ 
 			reinterpret_cast<const uint8_t*>(str.data()), 
 			str.size() 
@@ -202,7 +202,7 @@ namespace mes
 				token.data + 1,
 				static_cast<size_t>(token.length - 1)
 			};
-			return advtxt::string_codec(str);
+			return advtxt::string_encdec(str);
 		}
 		return {};
 	}

@@ -134,7 +134,7 @@ namespace mes
 
 		for (size_t offset{}; offset < this->m_asmbin.size(); ) 
 		{
-			script_view::token token
+			mes::token token
 			{
 				.data   = &this->m_asmbin[offset],
 				.offset = static_cast<int32_t>(offset)

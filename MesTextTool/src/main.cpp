@@ -16,7 +16,7 @@ namespace mes_text_tool
 		L"- GitHub: https://github.com/cokkeijigen/MesTextTool\n"
 	};
 
-	static auto get_value_from_exename(const wchar_t* args, bool& log, mes::script::union_info_t& info, uint32_t& cdpg) -> void
+	static auto get_value_from_exename(const wchar_t* args, bool& log, mes::unioninfo& info, uint32_t& cdpg) -> void
 	{
 		xstr::wstring_buffer exename{ xfsys::path::name(args) };
 		const auto splits{ exename.to_lower().split_of(L'.', L'-', L'_') };
@@ -55,7 +55,7 @@ namespace mes_text_tool
 		}
 	}
 
-	static auto get_value_from_argv(const int argc, wchar_t* const argv[], bool& log, mes::script::union_info_t& info, uint32_t& cdpg)
+	static auto get_value_from_argv(const int argc, wchar_t* const argv[], bool& log, mes::unioninfo& info, uint32_t& cdpg)
 	{
 		for (size_t i = 1; i < argc - 1; i++)
 		{
@@ -136,7 +136,7 @@ namespace mes_text_tool
 		else 
 		{
 			bool enable_console_log{ false };
-			mes::script::union_info_t input_script_info{};
+			mes::unioninfo input_script_info{};
 			uint32_t input_code_page{ mes::scripts::defualt_code_page };
 
 			get_value_from_exename(argv[0], enable_console_log, input_script_info, input_code_page);

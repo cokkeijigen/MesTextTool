@@ -171,8 +171,8 @@ namespace mes
 		inline static constexpr const uint8_t endtoken[2]{ 0x0A, 0x0D };
 		static inline constexpr const uint8_t magic   [8]{ '#', 'A','D','V','_','T','X', 'T' };
 
-		auto string_codec(const std::span<const uint8_t> str) -> std::string;
-		auto string_codec(const std::string_view str) -> std::string;
-		auto string_parse(const view::token&   token) -> std::string;
+		auto string_encdec(const std::span<const uint8_t> str) -> std::string;
+		auto string_encdec(const std::string_view str) -> std::string;
+		auto string_parse (const view::token&   token) -> std::string;
 	}
 }
