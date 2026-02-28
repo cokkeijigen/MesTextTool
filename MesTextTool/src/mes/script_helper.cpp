@@ -283,7 +283,7 @@ namespace mes
 		return false;
 	}
 
-	auto script_helper::import_text(const std::vector<text::entry>& texts, bool absolute_file_offset) noexcept -> bool 
+	auto script_helper::import_text(const std::vector<text::entry>& texts, uint32_t use_code_page, bool absolute_file_offset) noexcept -> bool
 	{
 		if (texts.empty())
 		{
@@ -291,12 +291,12 @@ namespace mes
 		}
 		return bool
 		{
-			this->script_import(texts, absolute_file_offset) ? true :
-			this->advtxt_import(texts, absolute_file_offset)
+			this->script_import(texts, use_code_page, absolute_file_offset) ? true :
+			this->advtxt_import(texts, use_code_page, absolute_file_offset)
 		};
 	}
 
-	auto script_helper::script_import(const std::vector<text::entry>& texts, bool absolute_file_offset) noexcept -> bool
+	auto script_helper::script_import(const std::vector<text::entry>& texts, uint32_t use_code_page, bool absolute_file_offset) noexcept -> bool
 	{
 
 		const mes::script_view* script_view{ this->m_data_view.script_view() };
@@ -312,13 +312,13 @@ namespace mes
 		}
 
 		const mes::script_info* info{ script_view->info() };
+		const mes::script_view::view_t<uint8_t>& raw   { script_view->raw() };
 		const mes::script_view::view_t<uint8_t>& asmbin{ script_view->asmbin() };
 		const mes::script_view::view_t<int32_t>& labels{ script_view->labels() };
-		const size_t data_labels_bytes{ labels.size() * sizeof(int32_t) };
 
 		utils::xmem::buffer<uint8_t> buffer{};
 		buffer.resize(this->m_buffer.size());
-		buffer.recount(data_labels_bytes); // 先空出写入labels数据的空间
+		buffer.recount(asmbin.offset()); // 先空出头部数据的空间
 
 		size_t label_index{};
 		const int32_t base{ absolute_file_offset ? asmbin.offset() : 0 };
@@ -349,36 +349,51 @@ namespace mes
 				if (it != texts.end())
 				{
 					std::string* const entry_string{ it->string() }, text{};
-					if (entry_string == nullptr || entry_string->empty())
-					{
-						continue;
-					}
-					else 
+					if (entry_string != nullptr && !entry_string->empty())
 					{
 						text.assign(*entry_string);
 					}
-					
-					std::ranges::for_each(text, [&](char& ch) {
-						ch += script_view->info()->enckey; // 解密字符串
-					});
-					buffer.write(token.opcode()).write(text).write('\0');
-					continue;
+					else 
+					{
+						std::wstring* const entry_wstring{ it->wstring() };
+						if (entry_wstring != nullptr && !entry_wstring->empty())
+						{
+							text.assign(xstr::encoding_convert(*entry_wstring, use_code_page));
+						}
+					}
+					if(!text.empty())
+					{
+						std::ranges::for_each(text, [&](char& ch) {
+							ch -= script_view->info()->enckey; // 加密字符串
+						});
+						buffer.write(token.opcode()).write(text).write('\0');
+						continue;
+					}
 				}
 			}
-
-			if (std::ranges::contains(info->opstrs, token.opcode()))
+			else if (std::ranges::contains(info->opstrs, token.opcode()))
 			{
 				const auto&& it{ std::ranges::find(texts, token.offset + base, &text::entry::offset) };
 				if (it != texts.end())
 				{
-					std::string* const entry_string{ it->string() };
-					if (entry_string == nullptr || entry_string->empty())
+					std::string* const entry_string{ it->string() }, text{};
+					if (entry_string != nullptr && !entry_string->empty())
 					{
+						text.assign(*entry_string);
+					}
+					else 
+					{
+						std::wstring* const entry_wstring{ it->wstring() };
+						if (entry_wstring != nullptr && !entry_wstring->empty())
+						{
+							text.assign(xstr::encoding_convert(*entry_wstring, use_code_page));
+						}
+					}
+					if (!text.empty())
+					{
+						buffer.write(token.opcode()).write(text).write('\0');
 						continue;
 					}
-
-					buffer.write(token.opcode()).write(*entry_string).write('\0');
-					continue;
 				}
 			}
 
@@ -397,9 +412,9 @@ namespace mes
 			buffer.write(asmbin.data() + token.offset, token.length);
 		}
 
-		buffer.write(0, reinterpret_cast<const uint8_t*>(labels.data()), data_labels_bytes);
+		buffer.write(0, raw.data(), asmbin.offset());  // 写入头部数据
 
-		this->m_buffer = std::move(buffer);
+		this->m_buffer    = std::move(buffer);
 		this->m_data_view = mes::script_view
 		{
 			std::span<uint8_t>{ this->m_buffer.data(), this->m_buffer.count() },
@@ -409,7 +424,7 @@ namespace mes
 		return true;
 	}
 
-	auto script_helper::advtxt_import(const std::vector<text::entry>& texts, bool absolute_file_offset) noexcept -> bool
+	auto script_helper::advtxt_import(const std::vector<text::entry>& texts, uint32_t use_code_page, bool absolute_file_offset) noexcept -> bool
 	{
 		const mes::advtxt_view* advtxt_view{ this->m_data_view.advtxt_view() };
 		if (advtxt_view == nullptr)
@@ -441,13 +456,49 @@ namespace mes
 				if (it != texts.end())
 				{
 					const std::string* entry_string{ it->string() };
-					if (entry_string == nullptr || entry_string->empty())
+					if (entry_string != nullptr && !entry_string->empty())
 					{
+						if (*entry_string != "#pass#")
+						{
+							buffer.write(token->opcode).write(*entry_string).write(mes::advtxt::endtoken);
+						}
 						continue;
 					}
-					const std::string text{ advtxt::string_encdec(*entry_string) };
-					buffer.write(token->opcode).write(text).write(mes::advtxt::endtoken);
-					continue;
+
+					const std::wstring* entry_wstring{ it->wstring() };
+					if (entry_wstring != nullptr && !entry_wstring->empty())
+					{
+						if(*entry_wstring != L"#pass#")
+						{
+							std::string text{};
+							size_t current{};
+							do
+							{
+								const size_t position{ entry_wstring->find(L'\n', current) };
+								if (position != std::wstring::npos)
+								{
+									std::wstring_view string{ entry_wstring->data() + current, position - current };
+									text.assign(xstr::encoding_convert(string, use_code_page));
+									current = position + 1;
+								}
+								else if (current < entry_wstring->size())
+								{
+									std::wstring_view string{ entry_wstring->data() + current,  entry_wstring->size() - current };
+									text.assign(xstr::encoding_convert(string, use_code_page));
+									current = entry_wstring->size();
+								}
+								else 
+								{
+									break;
+								}
+								
+								text = std::move(mes::advtxt::string_encdec(text));
+								buffer.write(token->opcode).write(text).write(mes::advtxt::endtoken);
+
+							} while (current < entry_wstring->size());
+						}
+						continue;
+					}
 				}
 			}
 			buffer.write(token.data, token.length).write(mes::advtxt::endtoken);

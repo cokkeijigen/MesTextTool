@@ -584,6 +584,56 @@ namespace xfsys
 		return extname_check(_file, _ext);
 	}
 
+	auto extname_change(const std::string_view file, const std::string_view ext) -> std::string 
+	{
+		size_t dot_pos{ file.find_last_of(".") };
+		if (dot_pos != std::string::npos)
+		{
+			if (ext.front() != L'.')
+			{
+				dot_pos += 1;
+			}
+			return std::string{ file.substr(0, dot_pos) }.append(ext);
+		}
+		else 
+		{
+			return std::string{ file }.append(ext);
+		}
+	}
+	
+	auto extname_change(const std::wstring_view file, const std::wstring_view ext) -> std::wstring 
+	{
+		size_t dot_pos{ file.find_last_of(L".") };
+		if (dot_pos != std::string::npos)
+		{
+			if (ext.front() != L'.')
+			{
+				dot_pos += 1;
+			}
+			return std::wstring{ file.substr(0, dot_pos) }.append(ext);
+		}
+		else
+		{
+			return std::wstring{ file }.append(ext);
+		}
+	}
+
+	auto extname_change(const std::u8string_view  file, const std::u8string_view ext) -> std::u8string 
+	{
+		const auto _file{ to_wstring(*reinterpret_cast<const std::string_view*>(&file), CP_UTF8) };
+		const auto _ext { to_wstring(*reinterpret_cast<const std::string_view*>(&ext ), CP_UTF8) };
+		std::string reuslt{ to_string(extname_change(_file, _ext), CP_UTF8) };
+		return *reinterpret_cast<std::u8string*>(&reuslt);
+	}
+
+	auto extname_change(const std::u16string_view file, const std::u8string_view ext) -> std::u16string 
+	{
+		const auto _file{ reinterpret_cast<const std::wstring_view*>(&file) };
+		const auto _ext { reinterpret_cast<const std::wstring_view*>(&ext ) };
+		std::wstring reuslt{ extname_change(*_file, *_ext) };
+		return *reinterpret_cast<std::u16string*>(&reuslt);
+	}
+
 	auto is_file(const std::string_view path) -> bool
 	{
 		const std::string target_path{ path };

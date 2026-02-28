@@ -856,6 +856,12 @@ namespace xfsys
 	auto extname_check(const std::u8string_view  file, const std::u8string_view ext) -> bool;
 	auto extname_check(const std::u16string_view file, const std::u8string_view ext) -> bool;
 
+	auto extname_change(const std::string_view  file, const std::string_view  ext) -> std::string;
+	auto extname_change(const std::wstring_view file, const std::wstring_view ext) -> std::wstring;
+
+	auto extname_change(const std::u8string_view  file, const std::u8string_view ext) -> std::u8string;
+	auto extname_change(const std::u16string_view file, const std::u8string_view ext) -> std::u16string;
+
 	auto is_file(const std::string_view  path) -> bool;
 	auto is_file(const std::wstring_view path) -> bool;
 	

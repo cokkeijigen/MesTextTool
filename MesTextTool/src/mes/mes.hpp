@@ -202,6 +202,14 @@ namespace mes
 	{
 	public:
 
+		enum view_type: uint8_t
+		{
+			mes         = 0,
+			mes_type    = 0,
+			advtxt      = 1,
+			advtxt_type = 1
+		};
+
 		using variant = std::variant<std::nullptr_t, mes::script_view, mes::advtxt_view>;
 
 		inline auto script_view() const noexcept -> const mes::script_view*;
@@ -214,6 +222,7 @@ namespace mes
 		inline unionmes_view(mes::advtxt_view&& advtxt_view) noexcept;
 
 		inline auto empty() const noexcept -> bool;
+		inline auto type() const noexcept -> view_type;
 		inline auto info() const noexcept -> unioninfo;
 		inline auto operator=(mes::script_view&& script_view) noexcept -> unionmes_view&;
 		inline auto operator=(mes::advtxt_view&& advtxt_view) noexcept -> unionmes_view&;
@@ -221,6 +230,7 @@ namespace mes
 
 	protected:
 		variant m_value{};
+		view_type m_type{};
 	};
 
 	class script_helper
@@ -253,14 +263,14 @@ namespace mes
 		auto save(const std::u8string_view directory, const std::u8string_view name) noexcept -> bool;
 
 		auto export_text(const bool absolute_file_offset = true) const noexcept -> std::vector<text::entry>;
-		auto import_text(const std::vector<text::entry>& texts, bool absolute_file_offset = true) noexcept -> bool;
+		auto import_text(const std::vector<text::entry>& texts, uint32_t use_code_page = 932, bool absolute_file_offset = true) noexcept -> bool;
 
 		auto last_info_name() const noexcept -> std::string_view;
 
 	protected:
 
-		auto advtxt_import(const std::vector<text::entry>& texts, bool absolute_file_offset) noexcept -> bool;
-		auto script_import(const std::vector<text::entry>& texts, bool absolute_file_offset) noexcept -> bool;
+		auto advtxt_import(const std::vector<text::entry>& texts, uint32_t use_code_page, bool absolute_file_offset) noexcept -> bool;
+		auto script_import(const std::vector<text::entry>& texts, uint32_t use_code_page, bool absolute_file_offset) noexcept -> bool;
 
 		auto script_export(std::vector<text::entry>& texts, bool absolute_file_offset) const noexcept -> bool;
 		auto advtxt_export(std::vector<text::entry>& texts, bool absolute_file_offset) const noexcept -> bool;
@@ -375,22 +385,26 @@ namespace mes
 	inline unionmes_view::unionmes_view(mes::script_view&& script_view) noexcept
 	{
 		this->m_value = std::move(script_view);
+		this->m_type  = view_type::mes;
 	}
 
 	inline unionmes_view::unionmes_view(mes::advtxt_view&& advtxt_view) noexcept
 	{
 		this->m_value = std::move(advtxt_view);
+		this->m_type  = view_type::advtxt;
 	}
 
 	inline auto unionmes_view::operator=(mes::script_view&& script_view) noexcept -> unionmes_view&
 	{
 		this->m_value = std::move(script_view);
+		this->m_type  = view_type::mes;
 		return *this;
 	}
 
 	inline auto unionmes_view::operator=(mes::advtxt_view&& advtxt_view) noexcept -> unionmes_view&
 	{
 		this->m_value = std::move(advtxt_view);
+		this->m_type = view_type::advtxt;
 		return *this;
 	}
 
@@ -403,6 +417,11 @@ namespace mes
 	inline auto unionmes_view::empty() const noexcept -> bool
 	{
 		return this->m_value.index() == 0 || this->m_value.valueless_by_exception();
+	}
+
+	inline auto unionmes_view::type() const noexcept -> view_type
+	{
+		return this->m_type;
 	}
 
 	inline auto unionmes_view::info() const noexcept -> unioninfo
@@ -468,7 +487,13 @@ namespace mes
 
 	inline auto unioninfo::empty() const noexcept -> bool 
 	{
-		return this->m_value.index() == 0 || this->m_value.valueless_by_exception();
+		const auto info_1 = std::get_if<const mes::script_info*>(&this->m_value);
+		const auto info_2 = std::get_if<const mes::advtxt_info*>(&this->m_value);
+		return bool
+		{
+			(info_1 == nullptr || *info_1 == nullptr) &&
+			(info_2 == nullptr || *info_2 == nullptr)
+		};
 	}
 
 	inline auto unioninfo::name() const noexcept -> std::string_view

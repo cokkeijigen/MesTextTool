@@ -50,133 +50,8 @@ namespace mes::text
 
 	auto formater::do_format(xstr::wstring_buffer& buffer, const mes::config& config) -> void
 	{
-		buffer.remove(L"\\n　").remove(L"\\n");
 
-		const auto text_view  { buffer.view()    };
-		const auto text_length{ text_view.size() };
-
-		if (text_length <= static_cast<size_t>(config.text_min_length))
-		{
-			return;
-		}
-
-		const auto is_talking{ formater::is_talking(text_view) };
-		const auto text_min_length{ static_cast<float>(config.text_min_length) };
-		const auto text_max_length{ static_cast<float>(config.text_max_length) };
-
-		float line_char_count{ 0.0f };
-		xstr::wstring_buffer new_buffer{ text_length + 0x10 };
-
-		for (size_t index{ 0 }; index < text_length;)
-		{
-			const wchar_t& this_char = text_view[index];
-
-			if (line_char_count >= text_min_length)
-			{
-				if (!formater::is_disallowed_as_start(this_char))
-				{
-					new_buffer.write({ is_talking ? L"\n　" : L"\n" });
-					line_char_count = { is_talking ? 1.0f : 0.0f };
-				}
-			}
-
-			if (this_char == L'｛')
-			{
-				const auto& [split, end] { formater::parse_text(text_view.substr(index)) };
-				if (split != std::wstring_view::npos && end != std::wstring_view::npos)
-				{
-					const size_t count{ end - split - 1 };
-					auto subtext{ text_view.substr(index + split + 1, count) };
-					
-					float target_count{ 0.0f };
-					for (const wchar_t& chr : subtext)
-					{
-						target_count += formater::is_half_width(chr) ? 0.5f : 1.0f;
-					}
-
-					line_char_count += target_count;
-					if (line_char_count >= config.text_max_length)
-					{
-						new_buffer.write({ is_talking ? L"\n　" : L"\n" });
-						line_char_count = target_count;
-					}
-
-					new_buffer.write(text_view.substr(index, end));
-
-					index += end + 1;
-					continue;
-				}
-			}
-
-			if (!formater::is_half_width(this_char)) 
-			{
-				line_char_count += 1.0f;
-			}
-			else if (this_char == L' ' || index == text_length - 1)
-			{
-				line_char_count += 0.5f;
-			}
-			else
-			{
-				auto subtext{ text_view.substr(index) };
-				const auto it = std::ranges::find_if_not
-				(
-					subtext,
-					[](const wchar_t& chr) -> bool
-					{
-						return formater::is_half_width(chr) && chr != L' ';
-					}
-				);
-
-				if (it != subtext.end())
-				{
-					const auto count{ std::ranges::distance(subtext.begin(), it) };
-					subtext = std::move(subtext.substr(0, count));
-				}
-
-				if (!subtext.starts_with(L"@"))
-				{
-					const auto target_count{ static_cast<float>(subtext.size()) / 2.0f };
-
-					line_char_count += target_count;
-					if (line_char_count >= config.text_max_length)
-					{
-						new_buffer.write(is_talking ? L"\n　" : L"\n");
-						line_char_count = target_count;
-					}
-				}
-
-				new_buffer.write(subtext);
-				index += subtext.size();
-				continue;
-			}
-
-			if (line_char_count >= static_cast<float>(config.text_min_length))
-			{
-				if (formater::is_disallowed_as_end(this_char))
-				{
-					line_char_count ={ is_talking ? 2.0f : 1.0f };
-					new_buffer.write({ is_talking ? L"\n　" : L"\n" });
-				}
-			}
-
-			new_buffer.write(this_char);
-			index++;
-		}
-
-		buffer = std::move(new_buffer);
-	}
-
-	auto formater::format(std::string& text, const int32_t input_code_page) const noexcept -> void
-	{
-		if (text.empty())
-		{
-			return;
-		}
-
-		xstr::wstring_buffer buffer{ xstr::cvt::to_utf16(text, input_code_page) };
-
-		for (const auto& [key, value] : this->m_config.after_replaces)
+		for (const auto& [key, value] : config.after_replaces)
 		{
 			buffer.replace(key, value);
 		}
@@ -186,7 +61,6 @@ namespace mes::text
 		buffer.replace(L"}", L"｝");
 
 		bool need_enable_format{ false };
-
 		if (buffer.starts_with(L"@::"))
 		{
 			buffer.remove(L"@::", 0, 1);
@@ -196,25 +70,168 @@ namespace mes::text
 		{
 			need_enable_format = bool
 			{
-				(this->m_config.text_max_length != -1 || this->m_config.text_min_length != -1) &&
-				this->m_config.text_max_length >= this->m_config.text_min_length
+				(config.text_max_length != -1 || config.text_min_length != -1) &&
+				config.text_max_length >= config.text_min_length
 			};
 		}
 
 		if (need_enable_format)
 		{
-			formater::do_format(buffer, this->m_config);
+			buffer.remove(L"\\n　").remove(L"\\n");
+
+			const auto text_view  { buffer.view()    };
+			const auto text_length{ text_view.size() };
+
+			if (text_length <= static_cast<size_t>(config.text_min_length))
+			{
+				return;
+			}
+
+			const auto is_talking{ formater::is_talking(text_view) };
+			const auto text_min_length{ static_cast<float>(config.text_min_length) };
+			const auto text_max_length{ static_cast<float>(config.text_max_length) };
+
+			float line_char_count{ 0.0f };
+			xstr::wstring_buffer new_buffer{ text_length + 0x10 };
+
+			for (size_t index{ 0 }; index < text_length;)
+			{
+				const wchar_t& this_char = text_view[index];
+
+				if (line_char_count >= text_min_length)
+				{
+					if (!formater::is_disallowed_as_start(this_char))
+					{
+						new_buffer.write({ is_talking ? L"\n　" : L"\n" });
+						line_char_count = { is_talking ? 1.0f : 0.0f };
+					}
+				}
+
+				if (this_char == L'｛')
+				{
+					const auto& [split, end] { formater::parse_text(text_view.substr(index)) };
+					if (split != std::wstring_view::npos && end != std::wstring_view::npos)
+					{
+						const size_t count{ end - split - 1 };
+						auto subtext{ text_view.substr(index + split + 1, count) };
+					
+						float target_count{ 0.0f };
+						for (const wchar_t& chr : subtext)
+						{
+							target_count += formater::is_half_width(chr) ? 0.5f : 1.0f;
+						}
+
+						line_char_count += target_count;
+						if (line_char_count >= config.text_max_length)
+						{
+							new_buffer.write({ is_talking ? L"\n　" : L"\n" });
+							line_char_count = target_count;
+						}
+
+						new_buffer.write(text_view.substr(index, end));
+
+						index += end + 1;
+						continue;
+					}
+				}
+
+				if (!formater::is_half_width(this_char)) 
+				{
+					line_char_count += 1.0f;
+				}
+				else if (this_char == L' ' || index == text_length - 1)
+				{
+					line_char_count += 0.5f;
+				}
+				else
+				{
+					auto subtext{ text_view.substr(index) };
+					const auto it = std::ranges::find_if_not
+					(
+						subtext,
+						[](const wchar_t& chr) -> bool
+						{
+							return formater::is_half_width(chr) && chr != L' ';
+						}
+					);
+
+					if (it != subtext.end())
+					{
+						const auto count{ std::ranges::distance(subtext.begin(), it) };
+						subtext = std::move(subtext.substr(0, count));
+					}
+
+					if (!subtext.starts_with(L"@"))
+					{
+						const auto target_count{ static_cast<float>(subtext.size()) / 2.0f };
+
+						line_char_count += target_count;
+						if (line_char_count >= config.text_max_length)
+						{
+							new_buffer.write(is_talking ? L"\n　" : L"\n");
+							line_char_count = target_count;
+						}
+					}
+
+					new_buffer.write(subtext);
+					index += subtext.size();
+					continue;
+				}
+
+				if (line_char_count >= static_cast<float>(config.text_min_length))
+				{
+					if (formater::is_disallowed_as_end(this_char))
+					{
+						line_char_count ={ is_talking ? 2.0f : 1.0f };
+						new_buffer.write({ is_talking ? L"\n　" : L"\n" });
+					}
+				}
+
+				new_buffer.write(this_char);
+				index++;
+			}
+
+			buffer = std::move(new_buffer);
 		}
 
-		for (const auto& [key, value] : this->m_config.after_replaces)
+		for (const auto& [key, value] : config.after_replaces)
 		{
 			buffer.replace(key, value);
 		}
-
-		text = std::move(buffer.string(this->m_config.use_code_page));
 	}
 
-	auto parse_format(const xfsys::file& file, std::vector<entry>& output, const text::formater& formater) -> void
+	auto formater::format(std::string& text, const uint32_t input_code_page) const noexcept -> void
+	{
+		if (text.empty())
+		{
+			return;
+		}
+
+		xstr::wstring_buffer buffer{ xstr::cvt::to_utf16(text, input_code_page) };
+		
+		formater::do_format(buffer, this->m_config);
+		
+		text = std::move(buffer.string(uint32_t
+			{
+				this->m_needs_transcoding ?
+				this->m_config.use_code_page :
+				input_code_page
+			})
+		);
+	}
+
+	auto formater::format(std::wstring& text) const noexcept -> void
+	{
+		if (text.empty())
+		{
+			return;
+		}
+		xstr::wstring_buffer buffer{ text };
+		formater::do_format(buffer, this->m_config);
+		text = std::wstring{ buffer.view() };
+	}
+
+	auto parse_format(const xfsys::file& file, std::vector<entry>& output, const text::formater& formater, bool entry_wstring) -> void
 	{
 		output.clear();
 
@@ -267,10 +284,19 @@ namespace mes::text
 			}
 
 			const auto _line{ reinterpret_cast<const std::string_view*>(&line) };
-			std::string text{ _line->substr(pos + 6) };
-			
-			formater.format(text, CP_UTF8);
-			output.push_back(entry{ offset, text });
+			if (entry_wstring)
+			{
+				std::wstring text{ xstr::convert_to_utf16(_line->substr(pos + 6), CP_UTF8) };
+				
+				formater.format(text);
+				output.push_back(entry{ offset, text });
+			}
+			else 
+			{
+				std::string text{ _line->substr(pos + 6) };
+				formater.format(text, CP_UTF8);
+				output.push_back(entry{ offset, text });
+			}
 
 			offset = -1;
 		}
@@ -310,31 +336,31 @@ namespace mes::text
 		return result;
 	}
 
-	auto parse_format(const xfsys::file& file, const text::formater& formater) -> std::vector<entry>
+	auto parse_format(const xfsys::file& file, const text::formater& formater, bool entry_wstring) -> std::vector<entry>
 	{
 		std::vector<entry> result{};
-		text::parse_format(file, result, formater);
+		text::parse_format(file, result, formater, entry_wstring);
 		return result;
 	}
 
-	auto parse_format(const std::wstring_view path, std::vector<entry>& output, const text::formater& formater) -> void
+	auto parse_format(const std::wstring_view path, std::vector<entry>& output, const text::formater& formater, bool entry_wstring) -> void
 	{
-		text::parse_format(xfsys::open(path, xfsys::read, false), output, formater);
+		text::parse_format(xfsys::open(path, xfsys::read, false), output, formater, entry_wstring);
 	}
 
-	auto parse_format(const std::u8string_view path, std::vector<entry>& output, const text::formater& formater) -> void
+	auto parse_format(const std::u8string_view path, std::vector<entry>& output, const text::formater& formater, bool entry_wstring) -> void
 	{
-		text::parse_format(xfsys::open(path, xfsys::read, false), output, formater);
+		text::parse_format(xfsys::open(path, xfsys::read, false), output, formater, entry_wstring);
 	}
 
-	auto parse_format(const std::wstring_view path, const text::formater& formater) -> std::vector<entry>
+	auto parse_format(const std::wstring_view path, const text::formater& formater, bool entry_wstring) -> std::vector<entry>
 	{
-		return text::parse_format(xfsys::open(path, xfsys::read, false), formater);
+		return text::parse_format(xfsys::open(path, xfsys::read, false), formater, entry_wstring);
 	}
 
-	auto parse_format(const std::u8string_view path, const text::formater& formater) -> std::vector<entry>
+	auto parse_format(const std::u8string_view path, const text::formater& formater, bool entry_wstring) -> std::vector<entry>
 	{
-		return text::parse_format(xfsys::open(path, xfsys::read, false), formater);
+		return text::parse_format(xfsys::open(path, xfsys::read, false), formater, entry_wstring);
 	}
 
 	auto format_dump(const std::u8string_view path, const std::vector<entry>& input, const int32_t input_code_page) -> bool

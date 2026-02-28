@@ -139,49 +139,28 @@ namespace mes::scripts
 			{
 				continue;
 			}
-			
-			std::wstring mesname{};
-			{
-				auto name{ entry.name() };
-				auto const dot_pos{ name.find_last_of(L".") };
-				if (dot_pos != std::string::npos)
-				{
-					name = name.substr(0, dot_pos);
-				}
-				mesname.assign(xstr::join(name, L".mes"));
-			}
 
-			const auto path_mes{ xfsys::path::join(config->input_path, mesname) };
-			if (!xfsys::is_file(path_mes))
+			const std::wstring mesname{ xfsys::extname_change(entry.name(), L".mes")   };
+			const std::wstring mespath{ xfsys::path::join(config->input_path, mesname) };
+			if (!xfsys::is_file(mespath))
 			{
-				if (this->m_logger)
-				{
-					constexpr wchar_t info[]{ L"Error! corresponding .mes file not found:\n- [y] " };
-					const auto message{ xstr::join(info, entry.full_path(), L"\n- [n] ", path_mes, L"\n")};
-					this->m_logger(message_level::error, message);
-				}
 				continue;
 			}
 
-			const auto path_txt{ entry.full_path() };
-			const auto texts{ mes::text::parse_format(path_txt, formater) };
+			if (!this->m_helper.load(mespath).is_parsed())
+			{
+				continue;
+			}
+
+			const bool entry_wstring{ this->m_helper.data_view().type() == unionmes_view::advtxt_type };
+			const std::vector<text::entry> texts { text::parse_format(entry.full_path(), formater, entry_wstring) };
 
 			if (texts.empty())
 			{
-				if (this->m_logger)
-				{
-					constexpr wchar_t info[]{ L"Error! texts is empty or cannot be parsed:\n- " };
-					this->m_logger(message_level::error, xstr::join(info, path_txt, L"\n"));
-				}
 				continue;
 			}
 
-			if (!this->m_helper.load(path_mes).is_parsed())
-			{
-				continue;
-			}
-
-			const auto imported{ this->m_helper.import_text(texts) };
+			const auto imported{ this->m_helper.import_text(texts, config->use_code_page, true) };
 			if (!imported)
 			{
 				continue;
@@ -196,30 +175,6 @@ namespace mes::scripts
 			
 			const auto path_out{ xfsys::path::join(path, mesname) };
 			const auto is_saved{ this->m_helper.save(path_out)    };
-
-			if (is_saved && this->m_logger)
-			{
-				const auto message = xstr::join
-				(
-					L"Import successful:",
-					L"\n- txt: ", path_txt,
-					L"\n- raw: ", path_mes,
-					L"\n- out: ", path_out,
-					L"\n"
-				);
-				this->m_logger(message_level::normal, message);
-			}
-			else if(this->m_logger)
-			{
-				const auto message = xstr::join
-				(
-					L"Import failed, Unknown error:",
-					L"\n- txt: ", path_txt,
-					L"\n- raw: ", path_mes,
-					L"\n"
-				);
-				this->m_logger(message_level::normal, message);
-			}
 		}
 	}
 

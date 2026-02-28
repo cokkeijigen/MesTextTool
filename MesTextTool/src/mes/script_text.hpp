@@ -44,6 +44,7 @@ namespace mes::text
 	class formater 
 	{
 		const mes::config& m_config;
+		mutable bool m_needs_transcoding;
 
 		static auto is_disallowed_as_start(const wchar_t wchar) -> bool;
 		static auto is_disallowed_as_end  (const wchar_t wchar) -> bool;
@@ -55,11 +56,15 @@ namespace mes::text
 
 	public:
 
-		inline formater(const config& config) noexcept: m_config{ config } 
+		inline formater(const config& config, bool needs_transcoding = true) noexcept
+			: m_config{ config }, m_needs_transcoding{ needs_transcoding }
 		{
 		}
 
-		auto format(std::string& text, const int32_t input_code_page) const noexcept -> void;
+		inline auto transcoding(const bool needs) noexcept -> void;
+
+		auto format(std::string&  text,  const uint32_t input_code_page) const noexcept -> void;
+		auto format(std::wstring& text) const noexcept -> void;
 
 		static auto do_format(xstr::wstring_buffer& buffer, const config& config) -> void;
 	};
@@ -67,15 +72,21 @@ namespace mes::text
 	extern auto format_dump(const xfsys::file& file, const std::vector<entry>& input, const int32_t input_code_page) -> bool;
 	extern auto format_dump(const std::u8string_view path, const std::vector<entry>& input, const int32_t input_code_page) -> bool;
 	extern auto format_dump(const std::wstring_view  path, const std::vector<entry>& input, const int32_t input_code_page) -> bool;
-		
-	extern auto parse_format(const xfsys::file& file, std::vector<entry>& output, const text::formater& formater) -> void;
-	extern auto parse_format(const std::wstring_view  path, std::vector<entry>& output, const text::formater& formater) -> void;
-	extern auto parse_format(const std::u8string_view path, std::vector<entry>& output, const text::formater& formater) -> void;
+
+	extern auto parse_format(const xfsys::file& file, std::vector<entry>& output, const text::formater& formater, bool entry_wstring = false) -> void;
+	extern auto parse_format(const std::wstring_view  path, std::vector<entry>& output, const text::formater& formater, bool entry_wstring = false) -> void;
+	extern auto parse_format(const std::u8string_view path, std::vector<entry>& output, const text::formater& formater, bool entry_wstring = false) -> void;
 	
-	extern auto parse_format(const xfsys::file& file, const text::formater& formater) -> std::vector<entry>;
-	extern auto parse_format(const std::wstring_view  path, const text::formater& formater) -> std::vector<entry>;
-	extern auto parse_format(const std::u8string_view path, const text::formater& formater) -> std::vector<entry>;
+	extern auto parse_format(const xfsys::file& file, const text::formater& formater, bool entry_wstring = false) -> std::vector<entry>;
+	extern auto parse_format(const std::wstring_view  path, const text::formater& formater, bool entry_wstring = false) -> std::vector<entry>;
+	extern auto parse_format(const std::u8string_view path, const text::formater& formater, bool entry_wstring = false) -> std::vector<entry>;
 	
+
+	inline auto formater::transcoding(const bool needs) noexcept -> void
+	{
+		this->m_needs_transcoding = needs;
+	}
+
 	inline auto entry::offset() const noexcept -> int32_t
 	{
 		return this->m_offset;

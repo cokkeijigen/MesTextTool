@@ -25,9 +25,9 @@ namespace mes
 		using vector_t = std::vector<std::pair<std::wstring, std::wstring>>;
 
 		const std::wstring input_path{};
-		const int32_t   use_code_page{ defcdpg };
-		const int32_t text_min_length{ deftmin };
-		const int32_t text_max_length{ deftmax };
+		const uint32_t use_code_page{ defcdpg };
+		const int32_t  text_min_length{ deftmin };
+		const int32_t  text_max_length{ deftmax };
 
 		const vector_t before_replaces{};
 		const vector_t  after_replaces{};
