@@ -478,7 +478,7 @@ namespace mes
 								if (position != std::wstring::npos)
 								{
 									std::wstring_view string{ entry_wstring->data() + current, position - current };
-									text    = std::move(xstr::encoding_convert(string, use_code_page)));
+									text    = std::move(xstr::encoding_convert(string, use_code_page));
 									current = position + 1;
 								}
 								else if (current < size)
