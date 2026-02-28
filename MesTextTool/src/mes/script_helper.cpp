@@ -333,12 +333,14 @@ namespace mes
 					info->version & 0xFF00u ? 0x02 :
 					0x01
 				};
-				if (token.offset + first_token_bytes == labels.data()[label_index])
+
+				int32_t& label{ labels[label_index] };
+				if (token.offset + first_token_bytes == label)
 				{
 					int32_t  count{ static_cast<int32_t>(buffer.count()) };
 					int32_t offset{ count - asmbin.offset() + first_token_bytes };
-					labels[label_index] = offset;
-					label_index++;
+					label = offset;
+					label_index ++;
 				}
 			}
 
