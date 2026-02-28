@@ -337,8 +337,7 @@ namespace mes
 				{
 					int32_t  count{ static_cast<int32_t>(buffer.count()) };
 					int32_t offset{ count - asmbin.offset() + first_token_bytes };
-					int32_t& label{ labels.data()[label_index] };
-					label = { static_cast<int32_t>(offset) };
+					labels[label_index] = offset;
 					label_index++;
 				}
 			}
@@ -401,10 +400,10 @@ namespace mes
 			{
 				if (label_index < labels.size())
 				{
-					int32_t  count{ static_cast<int32_t>(buffer.count()) };
+					int32_t& label{ labels[label_index] };
+					int32_t  count{ static_cast<int32_t>(buffer.count())   };
 					int32_t offset{ count - asmbin.offset() + token.length };
-					int32_t& label{ labels.data()[label_index] };
-					label = { (label & (0xFF << 0x18)) | offset };
+					label = (label & (0xFF << 0x18)) | offset;
 					label_index++;
 				}
 			}
