@@ -327,16 +327,16 @@ namespace mes
 		{
 			if (labels.offset() == 0x04 && label_index < labels.size())
 			{
-				const int32_t first_token_length
+				const int32_t first_token_bytes
 				{
 					labels.offset() == 0x08 ? 0x03 :
-					(info->version & 0xFF00u) == 0x00 ?
-					0x01 : 0x02
+					info->version & 0xFF00u ? 0x02 :
+					0x01
 				};
-				if (token.offset + first_token_length == labels.data()[label_index])
+				if (token.offset + first_token_bytes == labels.data()[label_index])
 				{
 					int32_t  count{ static_cast<int32_t>(buffer.count()) };
-					int32_t offset{ count - asmbin.offset() + first_token_length };
+					int32_t offset{ count - asmbin.offset() + first_token_bytes };
 					int32_t& label{ labels.data()[label_index] };
 					label = { static_cast<int32_t>(offset) };
 					label_index++;
@@ -445,7 +445,7 @@ namespace mes
 		const mes::advtxt_view::view_t<uint8_t>& asmbin{ advtxt_view->asmbin() };
 		const int32_t base{ absolute_file_offset ? asmbin.offset() : 0 };
 
-		// Copy the header bytes of the raw data.
+		// 复制头部数据
 		buffer.write(advtxt_view->raw().data(), asmbin.offset());
 
 		for (const advtxt::token& token : tokens)
