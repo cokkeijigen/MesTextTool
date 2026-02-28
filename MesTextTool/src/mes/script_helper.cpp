@@ -471,7 +471,7 @@ namespace mes
 						if(*entry_wstring != L"#pass#")
 						{
 							std::string text{};
-							size_t current{};
+							size_t size{ entry_wstring->size() }, current{};
 							do
 							{
 								const size_t position{ entry_wstring->find(L'\n', current) };
@@ -481,11 +481,11 @@ namespace mes
 									text.assign(xstr::encoding_convert(string, use_code_page));
 									current = position + 1;
 								}
-								else if (current < entry_wstring->size())
+								else if (current < size)
 								{
-									std::wstring_view string{ entry_wstring->data() + current,  entry_wstring->size() - current };
+									std::wstring_view string{ entry_wstring->data() + current, size - current };
 									text.assign(xstr::encoding_convert(string, use_code_page));
-									current = entry_wstring->size();
+									current = size;
 								}
 								else 
 								{
@@ -495,7 +495,7 @@ namespace mes
 								text = std::move(mes::advtxt::string_encdec(text));
 								buffer.write(token->opcode).write(text).write(mes::advtxt::endtoken);
 
-							} while (current < entry_wstring->size());
+							} while (current < size);
 						}
 						continue;
 					}
@@ -504,7 +504,7 @@ namespace mes
 			buffer.write(token.data, token.length).write(mes::advtxt::endtoken);
 		}
 
-		this->m_buffer = std::move(buffer);
+		this->m_buffer    = std::move(buffer);
 		this->m_data_view = mes::advtxt_view
 		{
 			std::span<uint8_t>{ this->m_buffer.data(), this->m_buffer.count() },
