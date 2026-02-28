@@ -11,7 +11,20 @@ namespace mes::advtxt
 		int32_t offset{}, length{};
 
 		#pragma pack(push, 1)
-		struct value_t { uint8_t opcode, data[]; };
+		struct value_t 
+		{
+			uint8_t opcode;
+			uint8_t	data[];
+		};
+		#pragma pack(pop)
+
+		#pragma pack(push, 1)
+		struct label_t
+		{
+			uint8_t opcode;
+			uint8_t name[4]; // #ADR...
+			int32_t value;
+		};
 		#pragma pack(pop)
 
 		inline auto operator->() const noexcept -> const value_t* 
@@ -23,6 +36,12 @@ namespace mes::advtxt
 		{
 			return reinterpret_cast<const value_t*>(this->data);
 		}
+
+		inline auto label() const noexcept -> const label_t*
+		{
+			return reinterpret_cast<const label_t*>(this->data);
+		}
+
 	};
 
 	#pragma pack(push, 1)
