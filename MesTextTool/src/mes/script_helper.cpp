@@ -460,7 +460,8 @@ namespace mes
 					{
 						if (*entry_string != "#pass#")
 						{
-							buffer.write(token->opcode).write(*entry_string).write(mes::advtxt::endtoken);
+							const std::string text{ mes::advtxt::string_encdec(*entry_string) };
+							buffer.write(token->opcode).write(text).write(mes::advtxt::endtoken);
 						}
 						continue;
 					}
