@@ -6,10 +6,10 @@ namespace xstr
 
 	using namespace utils::xstr;
 
-	template<typename t, template<typename> class derived>
+	template<typename char_t, template<typename> class derived>
 	struct buffer_traits
 	{
-		using base_type = base_xstring_buffer<derived, t>;
+		using base_type = base_xstring_buffer<derived, char_t>;
 	};
 
 	template<template<typename> class derived>
