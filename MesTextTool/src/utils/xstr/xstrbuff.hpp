@@ -1,42 +1,60 @@
 #pragma once
 #include <string_buffer.hpp>
 
-namespace xstr {
+namespace xstr 
+{
 
 	using namespace utils::xstr;
 
-	template<class T>
-	class buffer : public base_xstring_buffer<buffer<T>, T>
+	template<typename t, template<typename> class derived>
+	struct buffer_traits
 	{
-	public:
-		using base_xstring_buffer<buffer<T>, T>::base_xstring_buffer;
+		using base_type = base_xstring_buffer<derived, t>;
 	};
 
-	template<>
-	class buffer<char> : public string_buffer
+	template<template<typename> class derived>
+	struct buffer_traits<char, derived>
 	{
-	public:
-		using string_buffer::string_buffer;
+		using base_type = string_buffer;
 	};
 
-	template<>
-	class buffer<wchar_t> : public wstring_buffer
+	template<template<typename> class derived>
+	struct buffer_traits<wchar_t, derived>
 	{
-	public:
-		using wstring_buffer::wstring_buffer;
+		using base_type = wstring_buffer;
 	};
 
-	template<>
-	class buffer<char8_t> : public u8string_buffer
+	template<template<typename> class derived>
+	struct buffer_traits<char8_t, derived>
 	{
-	public:
-		using u8string_buffer::u8string_buffer;
+		using base_type = u8string_buffer;
 	};
 
-	template<>
-	class buffer<char16_t> : public u16string_buffer
+	template<template<typename> class derived>
+	struct buffer_traits<char16_t, derived>
 	{
-	public:
-		using u16string_buffer::u16string_buffer;
+		using base_type = u16string_buffer;
 	};
+
+	template<class char_t>
+	struct buffer : public buffer_traits<char_t, buffer>::base_type
+	{
+		using base_type = typename buffer_traits<char_t, buffer>::base_type;
+		using base_type::base_type;
+	};
+
+	template<class char_t>
+	buffer(const char_t*) -> buffer<char_t>;
+
+	template<class char_t>
+	buffer(const std::basic_string<char_t>&) -> buffer<char_t>;
+
+	template<class char_t>
+	buffer(std::basic_string<char_t>&&) -> buffer<char_t>;
+
+	template<class char_t>
+	buffer(std::basic_string_view<char_t>&) -> buffer<char_t>;
+
+	template<class char_t>
+	buffer(std::basic_string_view<char_t>&&) -> buffer<char_t>;
 }

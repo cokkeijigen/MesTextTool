@@ -12,10 +12,7 @@ namespace xstr
 {
 	using namespace utils::xstr;
 
-	using buffer_x = string_buffer;
-	using buffer_w = string_buffer;
-
-	template<typename char_type>
+	template<class char_type>
 	struct strs : public string_builder<char_type>
 	{
 		using string_builder<char_type>::string_builder;
@@ -27,6 +24,24 @@ namespace xstr
 
 	template<class first, class... rest>
 	strs(first&&, rest&&...) -> strs<char_type_v<first>>;
+
+	template<class char_type>
+	struct str : public std::basic_string<char_type>
+	{
+		using char_t = char_type;
+		using std::basic_string<char_t>::basic_string;
+
+		template<class ...T>
+		requires (std::convertible_to<T, std::basic_string_view<char_t>> && ...)
+		inline str(T&& ... args) noexcept
+		{
+			std::initializer_list strs{ std::basic_string_view<char_t>{args}... };
+			this->assign_range(strs | std::views::join);
+		}
+	};
+
+	template<class first, class... rest>
+	str(first&&, rest&&...) -> str<char_type_v<first>>;
 
 	template<class ...T, class char_t = char_type_v<std::common_type_t<T...>>>
 	requires (std::convertible_to<T, std::basic_string_view<char_t>> && ...)

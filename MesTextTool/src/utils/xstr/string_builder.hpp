@@ -40,7 +40,7 @@ namespace utils::xstr
 	class string_builder
 	{
 		std::vector<std::basic_string_view<char_type>> m_views{};
-
+		
 	public:
 
 		using char_t = char_type;
@@ -60,6 +60,7 @@ namespace utils::xstr
 		requires std::convertible_to<V, std::basic_string_view<char_type>>
 		inline auto operator+=(V&& arg) noexcept -> string_builder&;
 		
+		inline auto append(std::span<const std::basic_string_view<char_type>> views) noexcept -> void;
 	};
 
 	template<class char_type>
@@ -77,22 +78,28 @@ namespace utils::xstr
 	template<class char_type>
 	template<class... V>
 	requires (std::convertible_to<V, std::basic_string_view<char_type>> && ...)
-	inline string_builder<char_type>::string_builder(V&&... args) noexcept
+	inline string_builder<char_type>::string_builder(V&& ...args) noexcept
 	{
 		if constexpr (sizeof...(V) > 0) 
 		{
-			this->m_views.reserve(sizeof...(args));
-			(this->m_views.emplace_back(std::forward<V>(args)), ...);
+			std::basic_string_view<char_type> views_array[]
+			{
+				static_cast<std::basic_string_view<char_type>>(std::forward<V>(args))...
+			};
+			this->append(views_array);
 		}
 	}
 
 	template<class char_type>
 	template<class ...V>
 	requires (sizeof...(V) > 0 && (std::convertible_to<V, std::basic_string_view<char_type>> && ...))
-	inline auto string_builder<char_type>::append(V && ...args) noexcept -> string_builder&
+	inline auto string_builder<char_type>::append(V&& ...args) noexcept -> string_builder&
 	{
-		this->m_views.reserve(m_views.size() + sizeof...(args));
-		(this->m_views.emplace_back(std::forward<V>(args)), ...);
+		std::basic_string_view<char_type> views_array[]
+		{
+			static_cast<std::basic_string_view<char_type>>(std::forward<V>(args))...
+		};
+		this->append(views_array);
 		return *this;
 	}
 
@@ -103,6 +110,13 @@ namespace utils::xstr
 	{
 		this->m_views.emplace_back(std::forward<V>(arg));
 		return *this;
+	}
+
+	template<class char_type>
+	inline auto string_builder<char_type>::append(std::span<const std::basic_string_view<char_type>> views) noexcept -> void
+	{
+		this->m_views.reserve(this->m_views.size() + views.size());
+		this->m_views.insert(this->m_views.end(), views.begin(), views.end());
 	}
 
 	template<class first, class... rest>
