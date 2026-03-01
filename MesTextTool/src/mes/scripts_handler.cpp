@@ -110,13 +110,13 @@ namespace mes::scripts
 		{
 			if (this->m_logger)
 			{
-				const xstr::strs msg
+				const xstr::str msg
 				{
 					L"Error! cannot read configuration file from:\n- ",
 					this->m_input_directory_or_file,
 					L"\n"
 				};
-				this->m_logger(message_level::error, *msg);
+				this->m_logger(message_level::error, msg);
 			}
 			return;
 		}
@@ -125,13 +125,13 @@ namespace mes::scripts
 		{
 			if (this->m_logger)
 			{
-				const xstr::strs msg
+				const xstr::str msg
 				{
 					L"Error! mes directory not exist:\n- ",
 					config->input_path,
 					L"\n"
 				};
-				this->m_logger(message_level::error, *msg);
+				this->m_logger(message_level::error, msg);
 			}
 			return;
 		}
@@ -223,13 +223,13 @@ namespace mes::scripts
 		}
 		else if (this->m_logger)
 		{
-			const xstr::strs msg
+			const xstr::str msg
 			{
 				L"Error! input path does not exists:\n- ",
 				this->m_input_directory_or_file,
 				L"\n"
 			};
-			this->m_logger(message_level::error, *msg);
+			this->m_logger(message_level::error, msg);
 		}
 		
 		const auto end{ std::chrono::high_resolution_clock::now() };
