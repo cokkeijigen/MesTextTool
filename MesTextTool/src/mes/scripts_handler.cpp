@@ -5,7 +5,6 @@
 
 namespace mes::scripts
 {
-
 	scripts_handler::scripts_handler(std::wstring_view input_directory_or_file, std::wstring_view output_directory) noexcept :
 		m_input_directory_or_file{ xstr::trim(input_directory_or_file) }, m_output_directory{ xstr::trim(output_directory) }
 	{
@@ -111,8 +110,13 @@ namespace mes::scripts
 		{
 			if (this->m_logger)
 			{
-				constexpr wchar_t message[]{ L"Error! cannot read configuration file from:\n- " };
-				this->m_logger(message_level::error, xstr::join(message, this->m_input_directory_or_file, L"\n"));
+				const xstr::strs msg
+				{
+					L"Error! cannot read configuration file from:\n- ",
+					this->m_input_directory_or_file,
+					L"\n"
+				};
+				this->m_logger(message_level::error, *msg);
 			}
 			return;
 		}
@@ -121,8 +125,13 @@ namespace mes::scripts
 		{
 			if (this->m_logger)
 			{
-				constexpr wchar_t message[]{ L"Error! mes directory not exist:\n- " };
-				this->m_logger(message_level::error, xstr::join(message, config->input_path, L"\n"));
+				const xstr::strs msg
+				{
+					L"Error! mes directory not exist:\n- ",
+					config->input_path,
+					L"\n"
+				};
+				this->m_logger(message_level::error, *msg);
 			}
 			return;
 		}
@@ -166,15 +175,15 @@ namespace mes::scripts
 				continue;
 			}
 
-			const auto dirs{ xstr::cvt::to_utf16(this->m_helper.last_info_name()).append(L"_mes")   };
-			const auto path{ xfsys::path::join(this->m_output_directory, dirs) };
+			const std::wstring dirs{ xstr::cvt::to_utf16(this->m_helper.last_info_name()).append(L"_mes")   };
+			const std::wstring path{ xfsys::path::join(this->m_output_directory, dirs) };
 			if (!xfsys::create_directory(path))
 			{
 				continue;
 			}
 			
-			const auto path_out{ xfsys::path::join(path, mesname) };
-			const auto is_saved{ this->m_helper.save(path_out)    };
+			const std::wstring path_out{ xfsys::path::join(path, mesname) };
+			const bool is_saved{ this->m_helper.save(path_out)    };
 		}
 	}
 
@@ -214,9 +223,13 @@ namespace mes::scripts
 		}
 		else if (this->m_logger)
 		{
-			constexpr wchar_t info[]{ L"Error! input path does not exists:\n- " };
-			const auto message{ xstr::join(info, this->m_input_directory_or_file, L"\n") };
-			this->m_logger(message_level::error, message);
+			const xstr::strs msg
+			{
+				L"Error! input path does not exists:\n- ",
+				this->m_input_directory_or_file,
+				L"\n"
+			};
+			this->m_logger(message_level::error, *msg);
 		}
 		
 		const auto end{ std::chrono::high_resolution_clock::now() };

@@ -3,9 +3,10 @@
 #include <optional>
 #include <charconv>
 #include <ranges>
-#include "xstrbuff.hpp"
-#include "string_converter.hpp"
-#include "string_lines_parser.hpp"
+#include <xstrbuff.hpp>
+#include <string_converter.hpp>
+#include <string_lines_parser.hpp>
+#include <string_builder.hpp>
 
 namespace xstr 
 {
@@ -14,12 +15,25 @@ namespace xstr
 	using buffer_x = string_buffer;
 	using buffer_w = string_buffer;
 
-	template<class ...T, class char_t = decltype(std::declval<std::tuple_element_t<0, std::tuple<T...>>>()[0])>
-	requires (std::convertible_to<T, std::basic_string_view<std::decay_t<char_t>>> && ...)
-	inline auto join(T&& ... args) -> std::basic_string<std::decay_t<char_t>>
+	template<typename char_type>
+	struct strs : public string_builder<char_type>
 	{
-		std::initializer_list strs{ std::basic_string_view<std::decay_t<char_t>>{args}... };
-		return { strs | std::views::join | std::ranges::to<std::basic_string<std::decay_t<char_t>>>() };
+		using string_builder<char_type>::string_builder;
+
+		template<class... V>
+		requires (std::convertible_to<V, std::basic_string_view<char_type>> && ...)
+		inline strs(V&&... args) noexcept : string_builder<char_type>(std::forward<V>(args)...) {}
+	};
+
+	template<class first, class... rest>
+	strs(first&&, rest&&...) -> strs<char_type_v<first>>;
+
+	template<class ...T, class char_t = char_type_v<std::common_type_t<T...>>>
+	requires (std::convertible_to<T, std::basic_string_view<char_t>> && ...)
+	inline auto join(T&& ... args) -> std::basic_string<char_t>
+	{
+		std::initializer_list strs{ std::basic_string_view<char_t>{args}... };
+		return { strs | std::views::join | std::ranges::to<std::basic_string<char_t>>() };
 	}
 	
 	inline auto trim(const std::string_view string) -> std::string_view 
