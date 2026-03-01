@@ -131,7 +131,6 @@ namespace mes_text_tool
 
 			xcout::helper.set_attrs(console::attrs::text_dark_red);
 			xcout::helper.writeline(message);
-			xcout::helper.reset_attrs();
 		}
 		else 
 		{
@@ -175,7 +174,7 @@ namespace mes_text_tool
 					}
 					case mes::scripts::handler::message_level::warning:
 					{
-						xcout::helper.set_attrs(xcout::attrs::text_dark_yellow);
+						xcout::helper.set_attrs(xcout::attrs::text_yellow);
 						xcout::helper.writeline(message);
 						break;
 					}
@@ -201,12 +200,11 @@ namespace mes_text_tool
 			file.write(logs.u8string(), xfsys::file::pos::begin);
 			file.close(), logs.clear();
 			
-			xcout::helper.set_attrs(xcout::attrs::text_dark_yellow);
 		}
 
+		xcout::helper.reset_attrs();
 		xcout::helper.write(information);
 		xcout::helper.write(L"- Time: %llfs\n", time);
-		xcout::helper.reset_attrs();
 		xcout::helper.read_anykey();
 	}
 

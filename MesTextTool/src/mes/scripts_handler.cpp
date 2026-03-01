@@ -20,11 +20,31 @@ namespace mes::scripts
 	{
 		if (!xfsys::extname_check(file, L".mes"))
 		{
+			if (this->m_logger)
+			{
+				const xstr::str msg
+				{
+					L"Warning! not a .mes file:\n- ",
+					file,
+					L"\n"
+				};
+				this->m_logger(message_level::warning, msg);
+			}
 			return false;
 		}
 
 		if (!this->m_helper.load(file).is_parsed())
 		{
+			if (this->m_logger)
+			{
+				const xstr::str msg
+				{
+					L"Error! Failed to parse the .mes file:\n- ",
+					file,
+					L"\n"
+				};
+				this->m_logger(message_level::error, msg);
+			}
 			return false;
 		}
 
@@ -36,13 +56,27 @@ namespace mes::scripts
 			{
 				return false;
 			}
-			output_infos.push_back(info);
+			if (!std::any_of(output_infos.begin(), output_infos.end(),
+				[&info](const auto& item) { return item.name() == info.name(); }))
+			{
+				output_infos.push_back(info);
+			}
 			const std::wstring u16name{ xstr::cvt::to_utf16(name).append(L"_text") };
 			output_directory.assign(xfsys::path::join(this->m_output_directory, u16name));
 		}
 		
 		if (!xfsys::create_directory(output_directory, true))
 		{
+			if (this->m_logger)
+			{
+				const xstr::str msg
+				{
+					L"Error! Failed to create the output directory:\n- ",
+					output_directory,
+					L"\n"
+				};
+				this->m_logger(message_level::error, msg);
+			}
 			return false;
 		}
 
@@ -62,6 +96,18 @@ namespace mes::scripts
 		{
 			mes::text::format_dump(output_file_path, texts, this->m_input_mes_code_page)
 		};
+
+		if (this->m_logger)
+		{
+			const xstr::str message
+			{
+				L"Export ", (completed ? L"succeeded" : L"failed (unknown error)"), L":\n",
+				L"- raw: ", file, L"\n",
+				L"- out: ", output_file_path, L"\n"
+			};
+
+			this->m_logger(completed ? message_level::normal : message_level::error, message);
+		}
 
 		return completed;
 	}
@@ -98,8 +144,18 @@ namespace mes::scripts
 		for (const mes::unioninfo& info : output_script_infos)
 		{
 			const std::wstring dirs{ xstr::cvt::to_utf16(xstr::join(info.name(), "_text")) };
-			const std::wstring path{ xfsys::path::join(this->m_output_directory, dirs)     };
-			const bool is_make_config{ mes::config::create(path, config) };
+			const std::wstring path{ xfsys::path::join(this->m_output_directory, dirs, mes::config::defuat_name()) };
+			const bool is_created{ mes::config::create(path, config, false) };
+
+			if (this->m_logger)
+			{
+				const xstr::str message
+				{
+					(is_created ? L"Created" : L"Failed to create"), L" configuration file:\n- ",
+					path, L"\n"
+				};
+				this->m_logger(is_created ? message_level::normal : message_level::warning, message);
+			}
 		}
 	}
 
@@ -146,6 +202,13 @@ namespace mes::scripts
 
 			if (!xfsys::extname_check(entry.name(), L".txt"))
 			{
+				const xstr::str msg
+				{
+					L"Warning! not a .txt file:\n- ",
+					entry.full_path(),
+					L"\n"
+				};
+				this->m_logger(message_level::warning, msg);
 				continue;
 			}
 
@@ -153,37 +216,94 @@ namespace mes::scripts
 			const std::wstring mespath{ xfsys::path::join(config->input_path, mesname) };
 			if (!xfsys::is_file(mespath))
 			{
+				if (this->m_logger)
+				{
+					const xstr::str msg
+					{
+						L"Warning! File does not exist:\n- ",
+						mespath,
+						L"\n"
+					};
+					this->m_logger(message_level::warning, msg);
+				}
 				continue;
 			}
 
 			if (!this->m_helper.load(mespath).is_parsed())
 			{
+				if (this->m_logger)
+				{
+					const xstr::str msg
+					{
+						L"Error! Failed to parse the .mes file:\n- ",
+						mespath,
+						L"\n"
+					};
+					this->m_logger(message_level::error, msg);
+				}
 				continue;
 			}
 
+			const std::wstring txtpath{ entry.full_path() };
 			const bool entry_wstring{ this->m_helper.data_view().type() == unionmes_view::advtxt_type };
-			const std::vector<text::entry> texts { text::parse_format(entry.full_path(), formater, entry_wstring) };
+			const std::vector<text::entry> texts { text::parse_format(txtpath, formater, entry_wstring) };
 
 			if (texts.empty())
 			{
+				const xstr::str msg
+				{
+					L"Warning! The parsed texts are empty:\n- ",
+					txtpath,
+					L"\n"
+				};
+				this->m_logger(message_level::warning, msg);
 				continue;
 			}
 
 			const auto imported{ this->m_helper.import_text(texts, config->use_code_page, true) };
 			if (!imported)
 			{
+				const xstr::str msg
+				{
+					L"Error! Failed to import text entries:\n",
+					L"- txt: ", txtpath, L"\n",
+					L"- mes: ", mespath, L"\n"
+				};
+				this->m_logger(message_level::error, msg);
 				continue;
 			}
 
-			const std::wstring dirs{ xstr::cvt::to_utf16(this->m_helper.last_info_name()).append(L"_mes")   };
-			const std::wstring path{ xfsys::path::join(this->m_output_directory, dirs) };
-			if (!xfsys::create_directory(path))
+			const std::wstring save_dirs{ xstr::cvt::to_utf16(this->m_helper.last_info_name()).append(L"_mes")   };
+			const std::wstring save_path{ xfsys::path::join(this->m_output_directory, save_dirs) };
+			if (!xfsys::create_directory(save_path))
 			{
+				if (this->m_logger)
+				{
+					const xstr::str msg
+					{
+						L"Error! Failed to create the save directory:\n- ",
+						save_path,
+						L"\n"
+					};
+					this->m_logger(message_level::error, msg);
+				}
 				continue;
 			}
 			
-			const std::wstring path_out{ xfsys::path::join(path, mesname) };
-			const bool is_saved{ this->m_helper.save(path_out)    };
+			const std::wstring target_path{ xfsys::path::join(save_path, mesname) };
+			const bool completed{ this->m_helper.save(target_path) };
+
+			if (this->m_logger)
+			{
+				const xstr::str message
+				{
+					L"Import ", (completed ? L"succeeded" : L"failed (unknown error)"), L":\n",
+					L"- txt: ", txtpath, L"\n",
+					L"- raw: ", mespath, L"\n",
+					L"- out: ", target_path, L"\n"
+				};
+				this->m_logger(completed ? message_level::normal : message_level::error, message);
+			}
 		}
 	}
 
@@ -207,7 +327,7 @@ namespace mes::scripts
 		{
 			if (this->m_logger)
 			{
-				this->m_logger(message_level::normal, L"[SCRIPTS_HANDLER::PROCESS] IMPORT_TEXT_HANDLE\n");
+				this->m_logger(message_level::warning, L"[SCRIPTS_HANDLER::PROCESS] IMPORT_TEXT_HANDLE\n");
 			}
 
 			this->import_text_handle();
@@ -216,7 +336,7 @@ namespace mes::scripts
 		{
 			if (this->m_logger)
 			{
-				this->m_logger(message_level::normal, L"[SCRIPTS_HANDLER::PROCESS] EXPORT_TEXT_HANDLE\n");
+				this->m_logger(message_level::warning, L"[SCRIPTS_HANDLER::PROCESS] EXPORT_TEXT_HANDLE\n");
 			}
 
 			this->export_text_handle();

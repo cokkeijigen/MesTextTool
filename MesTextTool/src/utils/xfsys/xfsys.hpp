@@ -65,7 +65,7 @@ namespace xfsys
 		inline file& operator=(const file& other) = delete;
 
 		inline file(file&& other) noexcept;
-		inline file& operator=(file&& other) noexcept;
+		inline auto operator=(file&& other) noexcept -> file&;
 
 		inline file(handle_t&& handle) noexcept : m_handle{ handle } {};
 		
@@ -119,10 +119,11 @@ namespace xfsys
 		other.m_handle = nullptr;
 	}
 
-	inline file& file::operator=(file&& other) noexcept
+	inline auto file::operator=(file&& other) noexcept -> file&
 	{
 		this->m_handle = other.m_handle;
 		other.m_handle = nullptr;
+		return *this;
 	}
 
 	inline auto file::write(write_buffer_t auto&& buffer, bool end_always) const noexcept -> size_t

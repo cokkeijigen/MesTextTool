@@ -194,79 +194,111 @@ namespace mes
 		return true;
 	}
 
-	auto config::read(const std::string_view directory, config& result) -> bool
+	auto config::read(const std::string_view path, config& result, bool defuat_name) -> bool
 	{
-		if (directory.empty())
+		if (path.empty())
 		{
 			return false;
 		}
 
-		const auto path{ xfsys::path::join(directory, xstr::cvt::to_utf8(config::k_name)) };
-		return config::read(xfsys::open(path, xfsys::read, false), result);
+		xfsys::file file{ nullptr };
+		if (defuat_name) 
+		{
+			file = xfsys::open(xfsys::path::join(path, xstr::cvt::to_utf8(config::k_name)), xfsys::read, false);
+		}
+		else 
+		{
+			file = xfsys::open(path, xfsys::read, false);
+		}
+		return config::read(file, result);
 	}
 
-	auto config::read(const std::wstring_view directory, config& result) -> bool
+	auto config::read(const std::wstring_view path, config& result, bool defuat_name) -> bool
 	{
-		if (directory.empty())
+		if (path.empty())
 		{
 			return false;
 		}
 
-		const auto path{ xfsys::path::join(directory, config::k_name) };
-		return config::read(xfsys::open(path, xfsys::read, false), result);
+		xfsys::file file{ nullptr };
+		if (defuat_name)
+		{
+			file = xfsys::open(xfsys::path::join(path, config::k_name), xfsys::read, false);
+		}
+		else
+		{
+			file = xfsys::open(path, xfsys::read, false);
+		}
+		return config::read(file, result);
 	}
 
-	auto config::read(const std::string_view directory) -> std::optional<config>
+	auto config::read(const std::string_view path, bool defuat_name) -> std::optional<config>
 	{
 		config result{};
-		if (config::read(directory, result))
+		if (config::read(path, result, defuat_name))
 		{
 			return result;
 		}
 		return std::nullopt;
 	}
 
-	auto config::read(const std::wstring_view directory) -> std::optional<config>
+	auto config::read(const std::wstring_view path, bool defuat_name) -> std::optional<config>
 	{
 		config result{};
-		if (config::read(directory, result))
+		if (config::read(path, result, defuat_name))
 		{
 			return result;
 		}
 		return std::nullopt;
 	}
 
-	auto config::create(const std::string_view directory) -> bool
+	auto config::create(const std::string_view path, bool defuat_name) -> bool
 	{
 		const config config{};
-		return config::create(directory, config);
+		return config::create(path, config, defuat_name);
 	}
 
-	auto config::create(const std::wstring_view directory) -> bool
+	auto config::create(const std::wstring_view path, bool defuat_name) -> bool
 	{
 		const config config{};
-		return config::create(directory, config);
+		return config::create(path, config);
 	}
 
-	auto config::create(const std::string_view directory, const config& config) -> bool
+	auto config::create(const std::string_view path, const config& config, bool defuat_name) -> bool
 	{
-		if (directory.empty())
+		if (path.empty())
 		{
 			return false;
 		}
 
-		const auto path{ xfsys::path::join(directory, xstr::cvt::to_utf8(config::k_name)) };
-		return config::create(xfsys::create(path), config);
+		xfsys::file file{ nullptr };
+		if (defuat_name)
+		{
+			file = xfsys::open(xfsys::path::join(path, xstr::cvt::to_utf8(config::k_name)), xfsys::write, true);
+		}
+		else
+		{
+			file = xfsys::open(path, xfsys::write, true);
+		}
+		return config::create(file, config);
 	}
 
-	auto config::create(std::wstring_view directory, const config& config) -> bool
+	auto config::create(std::wstring_view path, const config& config, bool defuat_name) -> bool
 	{
-		if (directory.empty())
+		if (path.empty())
 		{
 			return false;
 		}
-		
-		const auto path{ xfsys::path::join(directory, config::k_name) };
-		return config::create(xfsys::create(path), config);
+
+		xfsys::file file{ nullptr };
+		if (defuat_name)
+		{
+			file = xfsys::open(xfsys::path::join(path, config::k_name), xfsys::write, true);
+		}
+		else
+		{
+			file = xfsys::open(path, xfsys::write, true);
+		}
+		return config::create(file, config);
 	}
 }

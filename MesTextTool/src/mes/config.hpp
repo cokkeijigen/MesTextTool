@@ -36,16 +36,16 @@ namespace mes
 		static auto config_file_exists(const std::wstring_view directory) -> bool;
 
 		static auto read(const xfsys::file& file, config& result) -> bool;
-		static auto read(const std::string_view  directory) -> std::optional<config>;
-		static auto read(const std::wstring_view directory) -> std::optional<config>;
-		static auto read(const std::string_view  directory, config& result) -> bool;
-		static auto read(const std::wstring_view directory, config& result) -> bool;
+		static auto read(const std::string_view  path, bool defuat_name = true) -> std::optional<config>;
+		static auto read(const std::wstring_view path, bool defuat_name = true) -> std::optional<config>;
+		static auto read(const std::string_view  path, config& result, bool defuat_name = true) -> bool;
+		static auto read(const std::wstring_view path, config& result, bool defuat_name = true) -> bool;
 
-		static auto create(const std::string_view  directory) -> bool;
-		static auto create(const std::wstring_view directory) -> bool;
+		static auto create(const std::string_view  path, bool defuat_name = true) -> bool;
+		static auto create(const std::wstring_view path, bool defuat_name = true) -> bool;
 		static auto create(const xfsys::file& file, const config& config) -> bool;
-		static auto create(const std::string_view  directory, const config& config) -> bool;
-		static auto create(const std::wstring_view directory, const config& config) -> bool;
+		static auto create(const std::string_view  path, const config& config, bool defuat_name = true) -> bool;
+		static auto create(const std::wstring_view path, const config& config, bool defuat_name = true) -> bool;
 
 		static inline constexpr auto defuat_name() { return k_name; };
 	};
