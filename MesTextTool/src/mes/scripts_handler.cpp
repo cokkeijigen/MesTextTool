@@ -112,7 +112,7 @@ namespace mes::scripts
 			{
 				const xstr::str msg
 				{
-					L"Error! cannot read configuration file from:\n- ",
+					L"Error! Failed to read the configuration file from:\n- ",
 					this->m_input_directory_or_file,
 					L"\n"
 				};
@@ -127,7 +127,7 @@ namespace mes::scripts
 			{
 				const xstr::str msg
 				{
-					L"Error! mes directory not exist:\n- ",
+					L"The directory for .mes files does not exist:\n- ",
 					config->input_path,
 					L"\n"
 				};
@@ -225,7 +225,7 @@ namespace mes::scripts
 		{
 			const xstr::str msg
 			{
-				L"Error! input path does not exists:\n- ",
+				L"Error! The input path might not exist:\n- ",
 				this->m_input_directory_or_file,
 				L"\n"
 			};

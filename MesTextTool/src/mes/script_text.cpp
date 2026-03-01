@@ -48,7 +48,7 @@ namespace mes::text
 		return { split, end };
 	}
 
-	auto formater::do_format(xstr::wstring_buffer& buffer, const mes::config& config) -> void
+	auto formater::do_format(xstr::buffer<wchar_t>& buffer, const mes::config& config) -> void
 	{
 
 		for (const auto& [key, value] : config.after_replaces)
@@ -92,7 +92,7 @@ namespace mes::text
 			const auto text_max_length{ static_cast<float>(config.text_max_length) };
 
 			float line_char_count{ 0.0f };
-			xstr::wstring_buffer new_buffer{ text_length + 0x10 };
+			xstr::buffer<wchar_t> new_buffer{ text_length + 0x10 };
 
 			for (size_t index{ 0 }; index < text_length;)
 			{
@@ -207,7 +207,7 @@ namespace mes::text
 			return;
 		}
 
-		xstr::wstring_buffer buffer{ xstr::cvt::to_utf16(text, input_code_page) };
+		xstr::buffer<wchar_t> buffer{ xstr::cvt::to_utf16(text, input_code_page) };
 		
 		formater::do_format(buffer, this->m_config);
 		
@@ -226,7 +226,7 @@ namespace mes::text
 		{
 			return;
 		}
-		xstr::wstring_buffer buffer{ text };
+		xstr::buffer<wchar_t> buffer{ text };
 		formater::do_format(buffer, this->m_config);
 		text = std::wstring{ buffer.view() };
 	}
@@ -240,7 +240,7 @@ namespace mes::text
 			return;
 		}
 
-		xstr::u8string_buffer buffer{};
+		xstr::buffer<char8_t> buffer{};
 		const auto bytes_read{ file.read(buffer, file.size(), xfsys::file::pos::begin) };
 		
 		if (bytes_read == 0 || buffer.count() == 0)

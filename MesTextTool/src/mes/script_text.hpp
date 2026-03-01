@@ -66,7 +66,7 @@ namespace mes::text
 		auto format(std::string&  text,  const uint32_t input_code_page) const noexcept -> void;
 		auto format(std::wstring& text) const noexcept -> void;
 
-		static auto do_format(xstr::wstring_buffer& buffer, const config& config) -> void;
+		static auto do_format(xstr::buffer<wchar_t>& buffer, const config& config) -> void;
 	};
 
 	extern auto format_dump(const xfsys::file& file, const std::vector<entry>& input, const int32_t input_code_page) -> bool;
