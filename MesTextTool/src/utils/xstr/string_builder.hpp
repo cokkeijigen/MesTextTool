@@ -53,7 +53,7 @@ namespace utils::xstr
 		inline string_builder(V&&... args) noexcept;
 
 		template<class... V>
-		requires (std::convertible_to<V, std::basic_string_view<char_type>> && ...)
+		requires (sizeof...(V) > 0 && (std::convertible_to<V, std::basic_string_view<char_type>> && ...))
 		inline auto append(V&&... args) noexcept -> string_builder&;
 
 		template<class V>
@@ -79,16 +79,16 @@ namespace utils::xstr
 	requires (std::convertible_to<V, std::basic_string_view<char_type>> && ...)
 	inline string_builder<char_type>::string_builder(V&&... args) noexcept
 	{
-		this->m_views.reserve(sizeof...(args));
-		(
-			this->m_views.emplace_back(std::forward<V>(args)),
-			...
-		);
+		if constexpr (sizeof...(V) > 0) 
+		{
+			this->m_views.reserve(sizeof...(args));
+			(this->m_views.emplace_back(std::forward<V>(args)), ...);
+		}
 	}
 
 	template<class char_type>
 	template<class ...V>
-	requires (std::convertible_to<V, std::basic_string_view<char_type>> && ...)
+	requires (sizeof...(V) > 0 && (std::convertible_to<V, std::basic_string_view<char_type>> && ...))
 	inline auto string_builder<char_type>::append(V && ...args) noexcept -> string_builder&
 	{
 		this->m_views.reserve(m_views.size() + sizeof...(args));
