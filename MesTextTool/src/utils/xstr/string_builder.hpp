@@ -92,10 +92,7 @@ namespace utils::xstr
 	inline auto string_builder<char_type>::append(V && ...args) noexcept -> string_builder&
 	{
 		this->m_views.reserve(m_views.size() + sizeof...(args));
-		(
-			this->m_views.emplace_back(std::forward<V>(args)), 
-			...
-		);
+		(this->m_views.emplace_back(std::forward<V>(args)), ...);
 		return *this;
 	}
 
