@@ -61,6 +61,8 @@ namespace mes::advtxt
 		static std::vector<advtxt_info> advtxt_infos;
 		static const char* const advtxt_supports[];
 
+		auto set(std::vector<uint8_t>&& encstrs) const noexcept -> void;
+
 	public:
 		
 		const std::string name;
@@ -73,6 +75,7 @@ namespace mes::advtxt
 
 		static auto infos() -> const std::vector<advtxt_info>&;
 		static auto supports() -> const std::span<const char* const>;
+		static auto parse(std::string_view data) -> const advtxt_info*;
 	};
 	
 	class advtxt_view
