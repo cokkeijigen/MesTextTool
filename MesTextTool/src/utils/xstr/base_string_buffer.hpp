@@ -18,6 +18,23 @@ namespace utils::xstr
 	template<class T, class elem_t, class object_t>
 	concept union_convertible_of = (sizeof(T) == sizeof(elem_t) && std::convertible_to<T, elem_t>) || std::convertible_to<T, object_t>;
 
+	template<class elem_t, class view_t = std::basic_string_view<elem_t>>
+	inline auto convert_to_view(auto&& value) -> view_t
+	{
+		if constexpr (sizeof(decltype(value)) == sizeof(elem_t))
+		{
+			return view_t{ reinterpret_cast<const elem_t*>(&value), 1 };
+		}
+		else if constexpr (std::convertible_to<decltype(value), view_t>)
+		{
+			return view_t{ value };
+		}
+		else
+		{
+			static_assert(false, "Unsupported type conversion.");
+		}
+	}
+
 	template<class elem_t>
 	class base_string_buffer 
 	{
@@ -56,8 +73,6 @@ namespace utils::xstr
 		mutable size_t m_CharCount{};
 
 		inline auto check(const size_t length) -> void;
-		
-	 	auto static convert_to_view(auto&& value) -> view_t;
 
 	public:
 
@@ -171,23 +186,6 @@ namespace utils::xstr
 		{
 			size_t size{ (count + 1023) & ~1023 };
 			this->m_Buffer.resize(size);
-		}
-	}
-
-	template<class elem_t>
-	inline auto base_string_buffer<elem_t>::convert_to_view(auto&& value) -> view_t
-	{
-		if constexpr (sizeof(decltype(value)) == sizeof(elem_t))
-		{
-			return view_t{ reinterpret_cast<const elem_t*>(&value), 1 };
-		}
-		else if constexpr (std::convertible_to<decltype(value), view_t>)
-		{
-			return view_t{ value };
-		}
-		else
-		{
-			static_assert(false, "Unsupported type conversion.");
 		}
 	}
 
@@ -404,32 +402,31 @@ namespace utils::xstr
 	inline auto base_string_buffer<elem_t>::split(xstr::union_convertible_of<elem_t, view_t> auto elem, size_t count) -> std::vector<view_t>
 	{
 		std::vector<view_t> result{};
-		view_t string { base_string_buffer<elem_t>::convert_to_view(elem) };
+		view_t string { xstr::convert_to_view<elem_t>(elem) };
 		view_t view   { this->m_Buffer.data(), this->m_CharCount };
 
 		if (!string.empty() && !view.empty())
 		{
-			size_t length{ string.size() };
 			for (size_t current{ 0 }, find{ 0 }; current < view.size();)
 			{
 				size_t pos = view.find(string, current);
 				if (pos == npos)
 				{
-					auto count{ static_cast<size_t>(this->m_CharCount - current) };
-					auto substr{ view.substr(current, count) };
+					auto length{ static_cast<size_t>(view.size() - current) };
+					auto substr{ view.substr(current, length) };
 					result.push_back(substr);
 					break;
 				}
 
-				auto count{ static_cast<size_t>(pos - current) };
-				auto substr{ view.substr(current, count) };
+				auto length{ static_cast<size_t>(pos - current) };
+				auto substr{ view.substr(current, length) };
 				result.push_back(substr);
 
 				if (++find == count)
 				{
 					break;
 				}
-				current = pos + length;
+				current = pos + string.size();
 			}
 		}
 		else
@@ -497,8 +494,8 @@ namespace utils::xstr
 	{
 		std::initializer_list<view_t> list
 		{ 
-			base_string_buffer<elem_t>::convert_to_view(one),
-			base_string_buffer<elem_t>::convert_to_view(more)...
+			xstr::convert_to_view<elem_t>(one),
+			xstr::convert_to_view<elem_t>(more)...
 		};
 		return this->split_of(list);
 	}
@@ -511,8 +508,8 @@ namespace utils::xstr
 	{
 		std::initializer_list<view_t> list
 		{
-			base_string_buffer<elem_t>::convert_to_view(one),
-			base_string_buffer<elem_t>::convert_to_view(more)...
+			xstr::convert_to_view<elem_t>(one),
+			xstr::convert_to_view<elem_t>(more)...
 		};
 		return this->split_of(list, count);
 	}
@@ -523,8 +520,8 @@ namespace utils::xstr
 		xstr::union_convertible_of<elem_t, view_t> auto n_str_or_char, 
 		size_t offset, size_t count) -> void
 	{
-		auto o_string{ base_string_buffer<elem_t>::convert_to_view(o_str_or_char) };
-		auto n_string{ base_string_buffer<elem_t>::convert_to_view(n_str_or_char) };
+		auto o_string{ xstr::convert_to_view<elem_t>(o_str_or_char) };
+		auto n_string{ xstr::convert_to_view<elem_t>(n_str_or_char) };
 
 		if (this->m_CharCount == 0 || o_string.empty())
 		{
@@ -662,7 +659,7 @@ namespace utils::xstr
 		xstr::union_convertible_of<elem_t, view_t> auto str_or_char, 
 		size_t offset, size_t count) -> void
 	{
-		auto string{ base_string_buffer<elem_t>::convert_to_view(str_or_char) };
+		auto string{ xstr::convert_to_view<elem_t>(str_or_char) };
 		this->replace(string, view_t{ empty }, offset, count);
 	}
 
