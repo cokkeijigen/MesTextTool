@@ -1,5 +1,6 @@
 #include <iostream>
 #include <mes_advtxt.hpp>
+#include <xstr.hpp>
 
 namespace mes::advtxt
 {
@@ -24,6 +25,78 @@ namespace mes::advtxt
 	auto advtxt_info::infos() -> const std::vector<advtxt_info>&
 	{
 		return advtxt_info::advtxt_infos;
+	}
+
+	inline auto advtxt_info::set(std::vector<uint8_t>&& encstrs) const noexcept -> void
+	{
+		*const_cast<std::vector<uint8_t>*>(&this->encstrs) = std::move(encstrs);
+	}
+
+	auto advtxt_info::parse(std::string_view data) -> const advtxt_info*
+	{
+		data = xstr::trim(data);
+		if (data.size() < 6 || !data.starts_with("advtxt"))
+		{
+			return nullptr;
+		}
+
+		const size_t eq_pos{ data.find('=') };
+		if (eq_pos == std::string_view::npos)
+		{
+			return nullptr;
+		}
+
+		const std::vector<std::string_view> parts
+		{
+			xstr::view(data.substr(eq_pos + 1)).split(',')
+		};
+
+		if (parts.empty() || parts.size() < 2)
+		{
+			return nullptr;
+		}
+
+		std::string_view name{ xstr::trim(parts[0]) };
+		if (name.empty())
+		{
+			return nullptr;
+		}
+
+		std::vector<uint8_t> encstrs{};
+		for (size_t i{ 1 }; i < parts.size(); i++)
+		{
+			const auto numstr{ xstr::trim(parts[i]) };
+			if (numstr.empty())
+			{
+				return nullptr;
+			}
+
+			std::optional value{ xstr::to_integer<uint8_t>(numstr) };
+			if (!value.has_value())
+			{
+				return nullptr;
+			}
+
+			encstrs.push_back(value.value());
+		}
+
+		for (const auto& info : advtxt_info::advtxt_infos)
+		{
+			if (info.name != name)
+			{
+				continue;
+			}
+			info.set(std::move(encstrs));
+			return &info;
+		}
+
+		advtxt_infos.push_back(advtxt_info
+		{
+			.name = std::string{ name },
+			.encstrs = std::move(encstrs)
+		});
+
+		return &advtxt_infos.back();
 	}
 
 	auto advtxt_info::get(const std::string_view name) -> const advtxt_info*
@@ -74,8 +147,7 @@ namespace mes::advtxt
 			{
 				continue;
 			}
-			std::vector<uint8_t>& encstrs{ *const_cast<std::vector<uint8_t>*>(&info.encstrs) };
-			encstrs = std::move(encstrs);
+			info.set(std::move(encstrs));
 			return &info;
 		}
 
