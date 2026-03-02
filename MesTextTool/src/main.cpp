@@ -120,7 +120,7 @@ namespace mes_text_tool
 
 		if (argc < 2)
 		{
-			constexpr char message[]
+			constexpr const char message[]
 			{
 				"[ILLEGAL PARAMETER] \n"
 				"At least 1 or 2 valid parameters are required.\n"
@@ -144,7 +144,7 @@ namespace mes_text_tool
 			const std::wstring_view  input_path{ argv[argc - 1] };
 			const std::wstring_view output_path{ xfsys::path::parent(argv[0]) };
 
-			xstr::wstring_buffer logs{};
+			xstr::buffer<wchar_t> logs{};
 			mes::scripts::handler handler{ input_path, output_path };
 
 			handler.set_script_info(input_script_info);
