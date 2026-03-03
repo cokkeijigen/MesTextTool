@@ -178,12 +178,11 @@ namespace xstr
 	{
 
 		auto begin{ this->begin() }, end{ this->end() - 1 };
-		
-		bool left_active { true };
-		bool right_active{ true };
-		while (begin <= end && (left_active || right_active))
+
+		uint8_t active_status{ 0x03 };
+		while (begin <= end && active_status != 0)
 		{
-			if (left_active)
+			if (active_status & 0x01)
 			{
 				if (xstr::is_space<char_type>(*begin))
 				{
@@ -191,11 +190,11 @@ namespace xstr
 				}
 				else
 				{
-					left_active = false;
+					active_status &= ~0x01;
 				}
 			}
 
-			if (right_active)
+			if (active_status & 0x02)
 			{
 				if (begin <= end && xstr::is_space<char_type>(*end))
 				{
@@ -203,7 +202,7 @@ namespace xstr
 				}
 				else
 				{
-					right_active = false;
+					active_status &= ~0x02;
 				}
 			}
 		}

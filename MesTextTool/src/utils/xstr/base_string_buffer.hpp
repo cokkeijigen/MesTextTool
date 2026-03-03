@@ -119,7 +119,7 @@ namespace utils::xstr
 
 		auto recount(size_t count = unused) const noexcept -> size_t;
 
-		auto trim() -> void;
+		auto trim() noexcept -> void;
 
 		auto split(xstr::union_convertible_of<elem_t, view_t> auto elem, size_t count = unused) -> std::vector<view_t>;
 
@@ -352,7 +352,7 @@ namespace utils::xstr
 	}
 
 	template<class elem_t>
-	auto base_string_buffer<elem_t>::trim() -> void
+	auto base_string_buffer<elem_t>::trim() noexcept -> void
 	{
 		if (this->m_CharCount > this->m_Buffer.size())
 		{
@@ -380,11 +380,10 @@ namespace utils::xstr
 			};
 		};
 
-		bool left_active { true };
-		bool right_active{ true };
-		while (begin <= end && (left_active || right_active))
+		uint8_t active_status{ 0x03 };
+		while (begin <= end && active_status != 0)
 		{
-			if (left_active)
+			if (active_status & 0x01)
 			{
 				if (is_space(*begin))
 				{
@@ -392,11 +391,11 @@ namespace utils::xstr
 				}
 				else
 				{
-					left_active = false;
+					active_status &= ~0x01;
 				}
 			}
 
-			if (right_active)
+			if (active_status & 0x02)
 			{
 				if (begin <= end && is_space(*end))
 				{
@@ -404,7 +403,7 @@ namespace utils::xstr
 				}
 				else
 				{
-					right_active = false;
+					active_status &= ~0x02;
 				}
 			}
 		}
