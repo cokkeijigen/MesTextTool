@@ -218,6 +218,11 @@ namespace utils::xstr
 	auto base_string_buffer<elem_t>::write_as_format(const elem_t* fmt, ...) -> void
 	{
 		constexpr auto elem_size = sizeof(elem_t);
+		static_assert
+		(
+			elem_size == sizeof(wchar_t) || elem_size == sizeof(char), 
+			"Format unsupported string element type."
+		);
 
 		if constexpr (elem_size == sizeof(char))
 		{
@@ -255,11 +260,6 @@ namespace utils::xstr
 
 			__crt_va_end(args);
 		}
-		else 
-		{
-			static_assert(false, "Format unsupported string element type.");
-		}
-
 	}
 
 	template<class elem_t>
@@ -437,7 +437,7 @@ namespace utils::xstr
 
 		if (!string.empty() && !view.empty())
 		{
-			for (size_t current{ 0 }, find{ 0 }; current < view.size();)
+			for (size_t current{ 0 }, found{ 0 }; current < view.size();)
 			{
 				size_t pos = view.find(string, current);
 				if (pos == npos)
@@ -452,7 +452,7 @@ namespace utils::xstr
 				auto substr{ view.substr(current, length) };
 				result.push_back(substr);
 
-				if (++find == count)
+				if (++found == count)
 				{
 					break;
 				}
@@ -475,7 +475,7 @@ namespace utils::xstr
 		
 		if (strings.size() > 0)
 		{
-			for (size_t beg{ 0 }, end{ 0 }, find{ 0 }; end <= view.size(); ++end)
+			for (size_t beg{ 0 }, end{ 0 }, found{ 0 }; end <= view.size(); ++end)
 			{
 				bool is_sep{ false };
 				for (const view_t& sep : strings)
@@ -489,7 +489,7 @@ namespace utils::xstr
 
 						end = end + sep.size();
 						beg = end;
-						find++;
+						found++;
 						break;
 					}
 				}
@@ -499,7 +499,7 @@ namespace utils::xstr
 					auto substr{ view.substr(beg, end - beg) };
 					result.push_back(substr);
 				}
-				else if(find == count)
+				else if(found == count)
 				{
 					auto substr{ view.substr(end, view.size() - end) };
 					result.push_back(substr);

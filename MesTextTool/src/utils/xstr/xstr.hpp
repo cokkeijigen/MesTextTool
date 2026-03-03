@@ -70,9 +70,9 @@ namespace xstr
 		
 		if (!string.empty() && !this->empty()) 
 		{
-			for (size_t current{ 0 }, find{ 0 }; current < this->size();)
+			for (size_t current{ 0 }, found{ 0 }; current < this->size();)
 			{
-				size_t pos = this->find(string, current);
+				const size_t pos{ this->find(string, current) };
 				if (pos == std::basic_string_view<char_type>::npos)
 				{
 					auto length{ static_cast<size_t>(this->size() - current) };
@@ -85,7 +85,7 @@ namespace xstr
 				auto substr{ this->substr(current, length) };
 				result.push_back(substr);
 
-				if (++find == count)
+				if (++found == count)
 				{
 					break;
 				}
