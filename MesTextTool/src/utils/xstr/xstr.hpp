@@ -13,6 +13,20 @@ namespace xstr
 	using namespace utils::xstr;
 
 	template<class char_type>
+	static auto is_space(char_type chr) -> bool 
+	{
+		return bool
+		{
+			chr == static_cast<char_type>( ' ') ||
+			chr == static_cast<char_type>('\n') ||
+			chr == static_cast<char_type>('\t') ||
+			chr == static_cast<char_type>('\v') ||
+			chr == static_cast<char_type>('\f') ||
+			chr == static_cast<char_type>('\r')
+		};
+	}
+
+	template<class char_type>
 	struct view : public std::basic_string_view<char_type>
 	{
 		using char_t = char_type;
@@ -29,27 +43,29 @@ namespace xstr
 		static constexpr inline auto unused{ static_cast<size_t>(-1) };
 
 		auto split(xstr::union_convertible_of<char_type, view_t> auto elem,
-			size_t count = unused) const noexcept -> std::vector<view_t>;
+			size_t count = unused) const noexcept -> std::vector<view<char_type>>;
 
 		auto split_of(std::initializer_list<view_t> strings, 
-			size_t count = unused) const noexcept -> std::vector<view_t>;
+			size_t count = unused) const noexcept -> std::vector<view<char_type>>;
 
 		auto split_of(
 			xstr::union_convertible_of<char_type, view_t> auto one,
 			xstr::union_convertible_of<char_type, view_t> auto ...more
-		) const noexcept -> std::vector<view_t>;
+		) const noexcept -> std::vector<view<char_type>>;
 
 		auto split_of(size_t count,
 			xstr::union_convertible_of<char_type, view_t> auto one,
 			xstr::union_convertible_of<char_type, view_t> auto ...more
-		) const noexcept -> std::vector<view_t>;
+		) const noexcept -> std::vector<view<char_type>>;
+
+		inline auto trim() noexcept -> view<char_type>&;
 	};
 
 	template<class char_type>
 	inline auto view<char_type>::split(xstr::union_convertible_of<char_type, view_t> auto elem,
-		size_t count) const noexcept -> std::vector<view_t>
+		size_t count) const noexcept -> std::vector<view<char_type>>
 	{
-		std::vector<view_t> result{};
+		std::vector<view<char_type>> result{};
 		const view_t string{ xstr::convert_to_view<char_type>(elem)};
 		
 		if (!string.empty() && !this->empty()) 
@@ -57,7 +73,7 @@ namespace xstr
 			for (size_t current{ 0 }, find{ 0 }; current < this->size();)
 			{
 				size_t pos = this->find(string, current);
-				if (pos == std::string_view::npos)
+				if (pos == std::basic_string_view<char_type>::npos)
 				{
 					auto length{ static_cast<size_t>(this->size() - current) };
 					auto substr{ this->substr(current, length) };
@@ -86,9 +102,9 @@ namespace xstr
 
 	template<class char_type>
 	inline auto view<char_type>::split_of(std::initializer_list<view_t> strings, 
-		size_t count) const noexcept -> std::vector<view_t>
+		size_t count) const noexcept -> std::vector<view<char_type>>
 	{
-		std::vector<view_t> result{};
+		std::vector<view<char_type>> result{};
 
 		if (strings.size() > 0) 
 		{
@@ -133,7 +149,7 @@ namespace xstr
 	inline auto view<char_type>::split_of(
 		xstr::union_convertible_of<char_type, view_t> auto one, 
 		xstr::union_convertible_of<char_type, view_t> auto ...more
-	) const noexcept -> std::vector<view_t>
+	) const noexcept -> std::vector<view<char_type>>
 	{
 		std::initializer_list<view_t> list
 		{
@@ -147,7 +163,7 @@ namespace xstr
 	inline auto view<char_type>::split_of(size_t count, 
 		xstr::union_convertible_of<char_type, view_t> auto one,
 		xstr::union_convertible_of<char_type, view_t> auto ...more
-	) const noexcept -> std::vector<view_t>
+	) const noexcept -> std::vector<view<char_type>>
 	{
 		std::initializer_list<view_t> list
 		{
@@ -155,6 +171,52 @@ namespace xstr
 			xstr::convert_to_view<char_type>(more)...
 		};
 		return this->split_of(list, count);
+	}
+
+	template<class char_type>
+	inline auto view<char_type>::trim() noexcept -> view<char_type>&
+	{
+
+		auto begin{ this->begin() }, end{ this->end() - 1 };
+		
+		bool left_active { true };
+		bool right_active{ true };
+		while (begin <= end && (left_active || right_active))
+		{
+			if (left_active)
+			{
+				if (xstr::is_space<char_type>(*begin))
+				{
+					begin++;
+				}
+				else
+				{
+					left_active = false;
+				}
+			}
+
+			if (right_active)
+			{
+				if (begin <= end && xstr::is_space<char_type>(*end))
+				{
+					end--;
+				}
+				else
+				{
+					right_active = false;
+				}
+			}
+		}
+
+		if (end < begin)
+		{
+			*this = {};
+		}
+		else 
+		{
+			*this = view<char_type>{ begin, end + 1 };
+		}
+		return *this;
 	}
 
 	template<class char_type>
@@ -201,57 +263,24 @@ namespace xstr
 		std::initializer_list strs{ std::basic_string_view<char_t>{args}... };
 		return { strs | std::views::join | std::ranges::to<std::basic_string<char_t>>() };
 	}
-	
-	inline auto trim(const std::string_view string) -> std::string_view 
+
+	template<class char_type>
+	inline auto trim(std::basic_string_view<char_type> string_view) -> std::basic_string_view<char_type>
 	{
-		constexpr const char WHITESPACE[]{" \n\t\v\f\r"};
-
-		std::string_view result{ string };
-		const auto beg{ result.find_first_not_of(WHITESPACE) };
-		if (beg != std::string_view::npos)
-		{
-			result = result.substr(beg);
-			const auto end{ result.find_last_not_of(WHITESPACE) };
-			result = result.substr(0, end + 1);
-		}
-		else
-		{
-			result = {};
-		}
-
-		return result;
-	}
-	
-	inline auto trim(const std::wstring_view string) -> std::wstring_view 
-	{
-		constexpr const wchar_t WHITESPACE[]{L" \n\t\v\f\r"};
-
-		std::wstring_view result{ string };
-		const auto beg{ result.find_first_not_of(WHITESPACE) };
-		if (beg != std::wstring_view::npos)
-		{
-			result = result.substr(beg);
-			const auto end{ result.find_last_not_of(WHITESPACE) };
-			result = result.substr(0, end + 1);
-		}
-		else
-		{
-			result = {};
-		}
-
-		return result;
+		return xstr::view<char_type>(std::move(string_view)).trim();
 	}
 
-	inline auto trim(const std::u8string_view string) -> std::u8string_view
+	template<class char_type>
+	inline auto trim(const std::basic_string<char_type>& string) -> std::basic_string_view<char_type>
 	{
-		auto result{ trim(*reinterpret_cast<const std::string_view*>(&string)) };
-		return *reinterpret_cast<std::u8string_view*>(&result);
+		return xstr::view<char_type>(std::move(string)).trim();
 	}
 
-	inline auto trim(const std::u16string_view string) -> std::u16string_view
+	template<class char_type>
+	inline auto trim(std::basic_string<char_type>&& string) -> std::basic_string_view<char_type>
 	{
-		auto result{ trim(*reinterpret_cast<const std::wstring_view*>(&string)) };
-		return *reinterpret_cast<std::u16string_view*>(&result);
+		string.assign(xstr::view<char_type>(string).trim());
+		return std::move(string);
 	}
 
 	template<class T = int64_t>
@@ -343,5 +372,18 @@ namespace xstr
 		return xstr::to_integer<T>(number, radix);
 	}
 
+	template<class T = int64_t>
+	requires std::is_integral<T>::value
+	inline auto to_integer(std::u8string_view str, int radix = 10) -> std::optional<T> 
+	{
+		return xstr::to_integer<T>(*reinterpret_cast<std::string_view*>(&str), radix);
+	}
+
+	template<class T = int64_t>
+	requires std::is_integral<T>::value
+	inline auto to_integer(std::u16string_view str, int radix = 10) -> std::optional<T> 
+	{
+		return xstr::to_integer<T>(*reinterpret_cast<std::wstring_view*>(&str), radix);
+	}
 }
 

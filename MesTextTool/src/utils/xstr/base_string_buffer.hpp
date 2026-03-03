@@ -48,6 +48,15 @@ namespace utils::xstr
 		static constexpr inline elem_t empty[] { static_cast<elem_t>( 0) };
 		static constexpr inline auto npos      { view_t::npos };
 		static constexpr inline auto unused    { static_cast<size_t>(-1) };
+		static constexpr inline const elem_t whitespace[]
+		{
+			static_cast<elem_t>( ' '),
+			static_cast<elem_t>('\n'),
+			static_cast<elem_t>('\t'),
+			static_cast<elem_t>('\v'),
+			static_cast<elem_t>('\f'),
+			static_cast<elem_t>('\r')
+		};
 
 		class iterator 
 		{
@@ -358,25 +367,46 @@ namespace utils::xstr
 		elem_t* begin{ data };
 		elem_t* end  { data + this->m_CharCount - 1 };
 
-		while (begin <= end) {
+		const auto is_space = [](elem_t chr) static
+		{
+			return bool
+			{
+				chr == static_cast<elem_t>(' ') ||
+				chr == static_cast<elem_t>('\n') ||
+				chr == static_cast<elem_t>('\t') ||
+				chr == static_cast<elem_t>('\v') ||
+				chr == static_cast<elem_t>('\f') ||
+				chr == static_cast<elem_t>('\r')
+			};
+		};
 
-			if (*begin == static_cast<elem_t>(0x20) ||
-				*begin == static_cast<elem_t>(0x0A) ||
-				*begin == static_cast<elem_t>(0x0D))
+		bool left_active { true };
+		bool right_active{ true };
+		while (begin <= end && (left_active || right_active))
+		{
+			if (left_active)
 			{
-				begin++;
-			}
-			else if (*end == static_cast<elem_t>(0x20) ||
-				*end == static_cast<elem_t>(0x0A) ||
-				*end == static_cast<elem_t>(0x0D))
-			{
-				end--;
-			}
-			else
-			{
-				break;
+				if (is_space(*begin))
+				{
+					begin++;
+				}
+				else
+				{
+					left_active = false;
+				}
 			}
 
+			if (right_active)
+			{
+				if (begin <= end && is_space(*end))
+				{
+					end--;
+				}
+				else
+				{
+					right_active = false;
+				}
+			}
 		}
 
 		if (end < begin) {
