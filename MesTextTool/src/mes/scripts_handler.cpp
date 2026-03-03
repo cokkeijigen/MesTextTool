@@ -126,7 +126,8 @@ namespace mes::scripts
 				{
 					continue;
 				}
-				this->export_text(xstr::trim(entry.full_path()), output_script_infos);
+				const std::wstring full_path{ entry.full_path() };
+				this->export_text(xstr::trim(full_path), output_script_infos);
 			}
 		}
 		else if(xfsys::is_file(this->m_input_directory_or_file))
