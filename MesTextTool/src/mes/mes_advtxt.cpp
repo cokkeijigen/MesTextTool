@@ -35,23 +35,36 @@ namespace mes::advtxt
 	auto advtxt_info::parse(std::string_view data) -> const advtxt_info*
 	{
 		data = xstr::trim(data);
-		if (data.size() < 6 || !data.starts_with("advtxt"))
+		if (data.size() <= 6 || !data.starts_with("advtxt"))
 		{
 			return nullptr;
 		}
 
-		const size_t eq_pos{ data.find('=') };
-		if (eq_pos == std::string_view::npos)
+		size_t eq_pos{ 6 };
+		do
+		{
+			if (data[eq_pos] == '=')
+			{
+				break;
+			}
+			else if (data[eq_pos] != ' ')
+			{
+				return nullptr;
+			}
+			eq_pos++;
+		} while (eq_pos < data.size());
+
+		if (++eq_pos >= data.size())
 		{
 			return nullptr;
 		}
 
-		const std::vector<std::string_view> parts
+		const std::vector<xstr::view<char>> parts
 		{
-			xstr::view(data.substr(eq_pos + 1)).split(',')
+			xstr::view(data.substr(eq_pos)).split(',')
 		};
 
-		if (parts.empty() || parts.size() < 2)
+		if (parts.empty() || parts.size() < 3)
 		{
 			return nullptr;
 		}
@@ -71,7 +84,7 @@ namespace mes::advtxt
 				return nullptr;
 			}
 
-			std::optional value{ xstr::to_integer<uint8_t>(numstr) };
+			std::optional value{ xstr::to_integer<uint8_t>(numstr, 16) };
 			if (!value.has_value())
 			{
 				return nullptr;
@@ -92,7 +105,7 @@ namespace mes::advtxt
 
 		advtxt_infos.push_back(advtxt_info
 		{
-			.name = std::string{ name },
+			.name    = std::string{ name },
 			.encstrs = std::move(encstrs)
 		});
 
