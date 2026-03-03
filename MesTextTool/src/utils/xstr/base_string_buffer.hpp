@@ -408,7 +408,8 @@ namespace utils::xstr
 			}
 		}
 
-		if (end < begin) {
+		if (end < begin) 
+		{
 			this->m_Buffer[0] = empty[0];
 			this->m_CharCount = 0;
 			return;
@@ -417,7 +418,8 @@ namespace utils::xstr
 		size_t count((end - begin) + 1);
 		size_t offset(begin - data);
 
-		if (offset != 0) {
+		if (offset != 0)
+		{
 			auto beg{ this->m_Buffer.begin() + offset };
 			auto end{ beg + count };
 			std::copy(beg, end, this->m_Buffer.begin());
