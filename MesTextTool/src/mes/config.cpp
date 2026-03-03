@@ -64,8 +64,10 @@ namespace mes
 			}
 			else if (flag == 1)
 			{
-				auto input_path{ const_cast<std::wstring*>(&result.input_path) };
-				input_path->assign(xstr::trim(xstr::cvt::to_utf16(line)));
+				const auto input_path{ const_cast<std::wstring*>(&result.input_path) };
+				const std::wstring u16line{ xstr::cvt::to_utf16(line) };
+				
+				input_path->assign(xstr::trim(u16line));
 				if (!input_path->empty())
 				{
 					flag = 0;
