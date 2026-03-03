@@ -179,10 +179,10 @@ namespace xstr
 
 		auto begin{ this->begin() }, end{ this->end() - 1 };
 
-		uint8_t active_status{ 0x03 };
-		while (begin <= end && active_status != 0)
+		uint8_t status{ 0x03 };
+		while (begin <= end && status != 0)
 		{
-			if (active_status & 0x01)
+			if (status & 0x01)
 			{
 				if (xstr::is_space<char_type>(*begin))
 				{
@@ -190,11 +190,11 @@ namespace xstr
 				}
 				else
 				{
-					active_status &= ~0x01;
+					status &= ~0x01;
 				}
 			}
 
-			if (active_status & 0x02)
+			if (status & 0x02)
 			{
 				if (begin <= end && xstr::is_space<char_type>(*end))
 				{
@@ -202,7 +202,7 @@ namespace xstr
 				}
 				else
 				{
-					active_status &= ~0x02;
+					status &= ~0x02;
 				}
 			}
 		}
