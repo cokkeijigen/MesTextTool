@@ -18,7 +18,7 @@ namespace mes_text_tool
 
 	static auto get_value_from_exename(const wchar_t* args, bool& log, mes::unioninfo& info, uint32_t& cdpg) -> void
 	{
-		xstr::wstring_buffer exename{ xfsys::path::name(args) };
+		xstr::buffer<wchar_t> exename{ xfsys::path::name(args) };
 		const auto splits{ exename.to_lower().split_of(L'.', L'-', L'_') };
 
 		for (const auto& arg : std::ranges::reverse_view(splits)) 
@@ -92,6 +92,22 @@ namespace mes_text_tool
 			else if (arg == L"log")
 			{
 				log = true;
+			}
+			else if (arg.starts_with(L"advtxt"))
+			{
+				const auto advtxt_info{ mes::advtxt::advtxt_info::parse(xstr::cvt::to_utf8(arg)) };
+				if (advtxt_info != nullptr)
+				{
+					info = advtxt_info;
+				}
+			}
+			else if (arg.starts_with(L"mes"))
+			{
+				const auto script_info{ mes::script_info::parse(xstr::cvt::to_utf8(arg)) };
+				if (script_info != nullptr)
+				{
+					info = script_info;
+				}
 			}
 			else
 			{
