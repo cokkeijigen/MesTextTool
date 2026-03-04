@@ -1,6 +1,7 @@
 #pragma once
 #include <span>
 #include <variant>
+#include <vector>
 #include <xmem.hpp>
 #include <xfsys.hpp>
 #include <mes_advtxt.hpp>
@@ -73,7 +74,7 @@ namespace mes
 		auto opcode  () const noexcept -> uint8_t;
 	};
 
-	struct script_info 
+	struct script_info
 	{
 		struct section
 		{
@@ -87,24 +88,29 @@ namespace mes
 			offset2  // head[0] * 0x06 + 0x04
 		};
 
-		const char* name;
-		const offset_t  offset;
-		const uint16_t version;
-		const section  uint8x2; // [op: byte] [arg1: uint8] [arg2: uint8]
-		const section uint8str; // [op: byte] [arg1: uint8] [arg2: string]
-		const section	string; // [op: byte] [arg1: string]
-		const section   encstr; // [op: byte] [arg1: encstr]
-		const section uint16x4; // [op: byte] [arg1: uint16] [arg2: uint16] [arg3: uint16] [arg4: uint16]
-		const uint8_t   enckey;
-		const std::initializer_list<uint8_t> opstrs; // the opcode for unencrypted strings in scene text
+		std::string name;
+		offset_t  offset;
+		uint16_t version;
+		section  uint8x2; // [op: byte] [arg1: uint8] [arg2: uint8]
+		section uint8str; // [op: byte] [arg1: uint8] [arg2: string]
+		section	string; // [op: byte] [arg1: string]
+		section   encstr; // [op: byte] [arg1: encstr]
+		section uint16x4; // [op: byte] [arg1: uint16] [arg2: uint16] [arg3: uint16] [arg4: uint16]
+		uint8_t   enckey;
+		std::vector<uint8_t> opstrs; // the opcode for unencrypted strings in scene text
 
-		static const script_info infos[];
-
-		static auto query(const uint16_t version)        -> const script_info* const;
-		static auto query(const std::span<uint8_t> data) -> const script_info* const;
-		static auto query(const std::string_view name)   -> const script_info* const;
+		static auto infos() noexcept -> const std::vector<script_info>&;
+		static auto parse(std::string_view data) noexcept -> const script_info*;
+		static auto query(const uint16_t version)       noexcept -> const script_info*;
+		static auto query(const std::span<uint8_t> data)noexcept -> const script_info*;
+		static auto query(const std::string_view name)  noexcept -> const script_info*;
 		
-		auto operator=(const mes::script_info&) -> script_info&;
+		auto operator=(const mes::script_info&) noexcept -> script_info&;
+
+	protected:
+
+		auto set(script_info&& other) noexcept -> script_info&;
+		static std::vector<script_info> script_infos;
 	};
 
 	class script_view
@@ -175,7 +181,6 @@ namespace mes
 		auto token_parse() noexcept -> void;
 	};
 
-
 	class unioninfo
 	{
 	public:
@@ -194,6 +199,7 @@ namespace mes
 		inline auto operator=(const mes::script_info* script_info) noexcept -> unioninfo&;
 		inline auto operator=(const mes::advtxt_info* advtxt_info) noexcept -> unioninfo&;
 		inline auto operator=(std::nullptr_t) noexcept -> unioninfo&;
+
 	protected:
 		variant m_value{};
 	};
@@ -315,15 +321,6 @@ namespace mes
 		return !(beg == end && beg == 0xFF) && (key >= beg && key <= end);
 	}
 
-	inline auto script_info::operator=(const mes::script_info& other) -> script_info&
-	{
-		if (this != reinterpret_cast<const script_info*>(&other))
-		{
-			std::memcpy(this, &other, sizeof(script_info));
-		}
-		return *this;
-	}
-	
 	inline script_view::script_view(const std::span<uint8_t> raw, const uint16_t version)
 		: script_view{ raw, script_info::query(version) }
 	{

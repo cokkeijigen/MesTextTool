@@ -1,11 +1,13 @@
 ﻿#include <iostream>
+#include <optional>
 #include <algorithm> 
 #include <ranges>
-#include "mes.hpp"
+#include <mes.hpp>
+#include <xstr.hpp>
 
 namespace mes
 {
-	const script_info script_info::infos[]
+	std::vector<script_info> script_info::script_infos
 	{  /*  name         offtype  version   uint8x2         uint8str        string          encstr          uint16x4      enckey  output strings... */
 		{ "ffexa"     , offset1, 0x7B69, { 0x00, 0x28 }, { 0x29, 0x2E }, { 0x2F, 0x49 }, { 0x4A, 0x4D }, { 0x4E, 0xFF },  0x20, { 0x43 }/*---------*/}, // fortissimo//Akkord:Bsusvier
 		{ "ffexs"     , offset1, 0x7B6B, { 0x00, 0x28 }, { 0x29, 0x2E }, { 0x2F, 0x4B }, { 0x4c, 0x4F }, { 0x50, 0xFF },  0x20, { 0x35, 0x43, 0x45 } }, // fortissimo EXS//Akkord:nächsten Phase
@@ -81,16 +83,182 @@ namespace mes
 		{ "renge"     , offset1, 0x4469, { 0x00, 0x28 }, { 0x29, 0x2E }, { 0x2F, 0x49 }, { 0x4A, 0x4D }, { 0x4E, 0xFF },  0x20, { 0x35 }/*---------*/}, // 恋夏 -れんげ-
 		{ "ccamellia" , offset1, 0x676C, { 0x00, 0x28 }, { 0x29, 0x2F }, { 0x30, 0x4A }, { 0x4B, 0x4E }, { 0x4F, 0xFF },  0x20, { 0x44, 0x46 }/*---*/}, // Princess Party Camellia ～プリンセスパーティーカメリア～
 	};
-	
+
 	[[maybe_unused]] static auto __script_infos_init__ = []()
 	{
-		constexpr static const auto begin{ const_cast<script_info*>(std::begin(script_info::infos)) };
-		constexpr static const auto   end{ const_cast<script_info*>(std::end  (script_info::infos)) };
-		std::ranges::sort(begin, end, std::greater{}, &script_info::version);
+		const auto infos{ const_cast<std::vector<script_info>*>(&script_info::infos()) };
+		std::ranges::sort(infos->begin(), infos->end(), std::greater{}, &script_info::version);
 		return true;
 	}();
 
-	auto script_info::query(const std::span<uint8_t> data) -> const script_info* const
+	auto script_info::infos() noexcept -> const std::vector<script_info>& 
+	{
+		return script_info::script_infos;
+	}
+
+	auto script_info::operator=(const mes::script_info& other) noexcept -> script_info&
+	{
+		if (this != reinterpret_cast<const mes::script_info*>(&other))
+		{
+			this->name.assign(other.name);
+			this->opstrs = other.opstrs;
+			auto  dst{ (void*)(&this->offset) };
+			auto  src{ (void*)(&other.offset) };
+			auto size{ size_t(&this->opstrs) - size_t(dst) };
+			std::memcpy(dst, src, size);
+		}
+		return *this;
+	}
+
+	auto script_info::set(script_info&& other) noexcept -> script_info&
+	{
+		this->name   = std::move(other.name);
+		this->opstrs = std::move(other.opstrs);
+		auto  dst{ (void*)(&this->offset) };
+		auto  src{ (void*)(&other.offset) };
+		auto size{ size_t(&this->opstrs) - size_t(dst) };
+		std::memcpy(dst, src, size);
+		return *this;
+	}
+
+	auto script_info::parse(std::string_view data) noexcept -> const script_info*
+	{
+		data = xstr::trim(data);
+		if (data.size() <= 3 || !data.starts_with("mes"))
+		{
+			return nullptr;
+		}
+
+		size_t eq_pos{ 3 };
+		do
+		{
+			if (data[eq_pos] == '=')
+			{
+				break;
+			}
+			else if (data[eq_pos] != ' ')
+			{
+				return nullptr;
+			}
+			eq_pos++;
+		} while (eq_pos < data.size());
+
+		if (++eq_pos >= data.size())
+		{
+			return nullptr;
+		}
+
+		const std::vector<xstr::view<char>> parts
+		{
+			xstr::view(data.substr(eq_pos)).split(',')
+		};
+
+		if (parts.empty() || parts.size() < 14)
+		{
+			return nullptr;
+		}
+
+		std::string_view name{ xstr::trim(parts[0]) };
+		if (name.empty())
+		{
+			return nullptr;
+		}
+
+		script_info::offset_t offset_type_value{};
+		std::string_view offset_type{ xstr::trim(parts[1]) };
+		if (offset_type.size() != 7 && !offset_type.starts_with("offset"))
+		{
+			return nullptr;
+		}
+		else if (offset_type[6] == '1')
+		{
+			offset_type_value = script_info::offset_t::offset1;
+		}
+		else if (offset_type[6] == '2')
+		{
+			offset_type_value = script_info::offset_t::offset2;
+		}
+		else 
+		{
+			return nullptr;
+		}
+
+		std::optional version{ xstr::to_integer<uint16_t>(xstr::trim(parts[2]), 16) };
+		if (!version.has_value())
+		{
+			return nullptr;
+		}
+
+		uint8_t values[11]{};
+		for (size_t i{ 0 }; i < sizeof(values); i++)
+		{
+			std::optional value{ xstr::to_integer<uint8_t>(parts[i + 3], 16)};
+			if (!value.has_value())
+			{
+				return nullptr;
+			}
+
+			values[i] = value.value();
+		}
+
+		std::vector<uint8_t> opstrs{};
+		if (parts.size() > 14)
+		{
+			for (size_t i{ 14 }; i < parts.size(); i++)
+			{
+				std::optional value{ xstr::to_integer<uint8_t>(parts[i], 16) };
+				if (!value.has_value())
+				{
+					return nullptr;
+				}
+				opstrs.push_back(value.value());
+			}
+		}
+
+		script_info newinfo
+		{
+			.name    = std::string{ name },
+			.offset  = offset_type_value,
+			.version = version.value(),
+			.opstrs  = std::move(opstrs)
+		};
+
+		std::memcpy((void*)(&newinfo.uint8x2), values, sizeof(values));
+		
+		bool is_existing{ false };
+		for (auto& info : script_info::script_infos)
+		{
+			if (info.name == name)
+			{
+				info.set(std::move(newinfo));
+				if (info.version == version.value())
+				{
+					return &info;
+				}
+				is_existing = true;
+				break;
+			}
+		}
+
+		if (!is_existing)
+		{
+			script_info::script_infos.push_back(script_info{});
+			script_info& back = script_info::script_infos.back();
+			back.set(std::move(newinfo));
+		}
+
+		std::ranges::sort
+		(
+			script_info::script_infos.begin(),
+			script_info::script_infos.end(),
+			std::greater{},
+			&script_info::version
+		);
+
+		return script_info::query(name);
+	}
+
+	auto script_info::query(const std::span<uint8_t> data) noexcept -> const script_info*
 	{
 		if (!data.data() || data.empty())
 		{
@@ -121,7 +289,7 @@ namespace mes
 			return nullptr;
 		}
 
-		for (const auto& info : script_info::infos)
+		for (const auto& info : script_info::script_infos)
 		{
 			switch (info.offset)
 			{
@@ -162,11 +330,11 @@ namespace mes
 		return nullptr;
 	}
 
-	auto script_info::query(const std::string_view name) -> const script_info* const
+	auto script_info::query(const std::string_view name) noexcept -> const script_info*
 	{
 		if (!name.empty())
 		{
-			for (const auto& info : script_info::infos)
+			for (const auto& info : script_info::script_infos)
 			{
 				if (name == info.name) return &info;
 			}
@@ -174,9 +342,9 @@ namespace mes
 		return nullptr;
 	}
 
-	auto script_info::query(const uint16_t version) -> const script_info* const
+	auto script_info::query(const uint16_t version) noexcept -> const script_info*
 	{
-		for (const auto& info : script_info::infos)
+		for (const auto& info : script_info::script_infos)
 		{
 			if (version == info.version) return &info;
 		}

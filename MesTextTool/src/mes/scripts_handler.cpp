@@ -61,7 +61,7 @@ namespace mes::scripts
 			{
 				output_infos.push_back(info);
 			}
-			const std::wstring u16name{ xstr::cvt::to_utf16(name).append(L"_text") };
+			const std::wstring u16name{ xstr::cvt::to_utf16(name, CP_UTF8).append(L"_text") };
 			output_directory.assign(xfsys::path::join(this->m_output_directory, u16name));
 		}
 		
@@ -274,8 +274,8 @@ namespace mes::scripts
 				continue;
 			}
 
-			const std::wstring save_dirs{ xstr::cvt::to_utf16(this->m_helper.last_info_name()).append(L"_mes")   };
-			const std::wstring save_path{ xfsys::path::join(this->m_output_directory, save_dirs) };
+			const std::wstring save_dirs{ xstr::cvt::to_utf16(this->m_helper.last_info_name(), CP_UTF8).append(L"_mes")  };
+			const std::wstring save_path{ xfsys::path::join(this->m_output_directory,  save_dirs) };
 			if (!xfsys::create_directory(save_path))
 			{
 				if (this->m_logger)
