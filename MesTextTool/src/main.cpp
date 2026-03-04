@@ -8,13 +8,14 @@ console::helper_t console::helper{ L"" PROJECT_NAME " v" PROJECT_VERSION };
 
 namespace mes_text_tool 
 {
-
+	xstr::buffer<wchar_t> logs{};
 	inline static constexpr std::wstring_view information
 	{
 		L"----------------------------------------------------\n"
 		L"- " PROJECT_NAME " v" PROJECT_VERSION " by iTsukezigen.\n"
 		L"- GitHub: https://github.com/cokkeijigen/MesTextTool\n"
 	};
+
 
 	static auto get_value_from_exename(const wchar_t* args, bool& log, mes::unioninfo& info, uint32_t& cdpg) -> void
 	{
@@ -100,6 +101,18 @@ namespace mes_text_tool
 				{
 					info = advtxt_info;
 				}
+				else 
+				{
+					const xstr::str message
+					{
+						L"Error!!! Failed to parse ",
+						L"advtxt_info:\n\"", arg, L"\"\n"
+					};
+					mes_text_tool::logs.write(message);
+					xcout::helper.set_attrs(xcout::attrs::text_dark_red);
+					xcout::helper.writeline(message);
+					xcout::helper.reset_attrs();
+				}
 			}
 			else if (arg.starts_with(L"mes"))
 			{
@@ -107,6 +120,19 @@ namespace mes_text_tool
 				if (script_info != nullptr)
 				{
 					info = script_info;
+				}
+				else 
+				{
+					const xstr::str message
+					{
+						L"Error!!! Failed to parse ",
+						L"script_info:\n\"",
+						arg, L"\"\n"
+					};
+					mes_text_tool::logs.write(message);
+					xcout::helper.set_attrs(xcout::attrs::text_dark_red);
+					xcout::helper.writeline(message);
+					xcout::helper.reset_attrs();
 				}
 			}
 			else
@@ -160,7 +186,6 @@ namespace mes_text_tool
 			const std::wstring_view  input_path{ argv[argc - 1] };
 			const std::wstring_view output_path{ xfsys::path::parent(argv[0]) };
 
-			xstr::buffer<wchar_t> logs{};
 			mes::scripts::handler handler{ input_path, output_path };
 
 			handler.set_script_info(input_script_info);
@@ -174,7 +199,7 @@ namespace mes_text_tool
 			time = handler.process(
 				[&](mes::scripts::handler::message_level level, std::wstring_view message) -> void
 				{
-					logs.write(message).write(L'\n');
+					mes_text_tool::logs.write(message).write(L'\n');
 
 					if (!enable_console_log)
 					{
@@ -211,11 +236,11 @@ namespace mes_text_tool
 				xcout::helper.writeline("[COMPLETE]\n");
 			}
 
-			logs.write(information).write_as_format(L"- Time: %llfs\n", time);
-			const auto file{ xfsys::create(output_path, L"output.log") };
-			file.write(logs.u8string(), xfsys::file::pos::begin);
-			file.close(), logs.clear();
-			
+			mes_text_tool::logs.write(information);
+			mes_text_tool::logs.write_as_format(L"- Time: %llfs\n", time);
+			const xfsys::file file{ xfsys::create(output_path, L"output.log") };
+			file.write(mes_text_tool::logs.u8string(), xfsys::file::pos::begin);
+			mes_text_tool::logs.clear();
 		}
 
 		xcout::helper.reset_attrs();
