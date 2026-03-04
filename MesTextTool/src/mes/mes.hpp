@@ -93,7 +93,7 @@ namespace mes
 		uint16_t version;
 		section  uint8x2; // [op: byte] [arg1: uint8] [arg2: uint8]
 		section uint8str; // [op: byte] [arg1: uint8] [arg2: string]
-		section	string; // [op: byte] [arg1: string]
+		section	  string; // [op: byte] [arg1: string]
 		section   encstr; // [op: byte] [arg1: encstr]
 		section uint16x4; // [op: byte] [arg1: uint16] [arg2: uint16] [arg3: uint16] [arg4: uint16]
 		uint8_t   enckey;
