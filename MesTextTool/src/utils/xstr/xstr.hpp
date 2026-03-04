@@ -176,6 +176,10 @@ namespace xstr
 	template<class char_type>
 	inline auto view<char_type>::trim() noexcept -> view<char_type>&
 	{
+		if (this->empty())
+		{
+			return *this;
+		}
 
 		auto begin{ this->begin() }, end{ this->end() - 1 };
 
