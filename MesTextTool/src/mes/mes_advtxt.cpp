@@ -103,13 +103,13 @@ namespace mes::advtxt
 			return &info;
 		}
 
-		advtxt_infos.push_back(advtxt_info
+		advtxt_info::advtxt_infos.push_back(advtxt_info
 		{
 			.name    = std::string{ name },
 			.encstrs = std::move(encstrs)
 		});
 
-		return &advtxt_infos.back();
+		return &advtxt_info::advtxt_infos.back();
 	}
 
 	auto advtxt_info::get(const std::string_view name) -> const advtxt_info*
