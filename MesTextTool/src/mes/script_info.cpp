@@ -192,7 +192,13 @@ namespace mes
 		uint8_t values[11]{};
 		for (size_t i{ 0 }; i < sizeof(values); i++)
 		{
-			std::optional value{ xstr::to_integer<uint8_t>(parts[i + 3], 16)};
+			const std::string_view part{ xstr::trim(parts[i + 3]) };
+			if(part.empty())
+			{
+				return nullptr;
+			}
+
+			std::optional value{ xstr::to_integer<uint8_t>(part, 16)};
 			if (!value.has_value())
 			{
 				return nullptr;
