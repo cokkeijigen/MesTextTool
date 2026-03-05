@@ -134,16 +134,13 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 |C.D. Christmas Days ～サーカスディスク クリスマスデイズ～|cdcd|
 |C.D.C.D.2 ～シーディーシーディー2～|cdcd2|
 |CircusLand Ⅰ|cland1|
+|うたう絵本４（ADVTXT）|utaeho4|
 |うたう絵本５|utaeho5|
 |うたう絵本６|utaeho6|
-
-| 游戏（旧版：ADVTXT） | 简称 |
-| :-----| :----: |
-|インファンタリア|infantaria|
-|Aries -アリエス-|aries|
-|うたう絵本４|utaeho4|
-|D.C.体験版|dc|
-|水夏ちょこっと体験版|suikademo|
+|インファンタリア（ADVTXT）|infantaria|
+|Aries -アリエス-（ADVTXT）|aries|
+|D.C.体験版（ADVTXT）|dc|
+|水夏ちょこっと体験版（ADVTXT）|suikademo|
 
 ## 0x3 如何编译（Windows）
 - **前提准备：**
