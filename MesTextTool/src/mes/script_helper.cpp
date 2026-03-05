@@ -178,23 +178,6 @@ namespace mes
 		return this->save(xstr::cvt::to_utf16(directory), xstr::cvt::to_utf16(name));
 	}
 
-	static auto _log_text__(utils::string::buffer text, int opcode, uint32_t cdpg) -> void
-	{
-		/*xcout::helper.set_cp(cdpg);
-		xcout::helper.write("[0x%02X]%s\n", opcode, text.data());
-		xcout::helper.reset_attrs();*/
-
-		auto wstr{ text.wstring_buffer(cdpg) };
-		for (auto& achar : wstr)
-		{
-			if (static_cast<uint16_t>(achar) >= 125)
-			{
-				xcout::helper.write(L"[0x%02X]%ls\n", opcode, wstr.data());
-				break;
-			}
-		}
-	}
-
 	auto script_helper::export_text(const bool absolute_file_offset) const noexcept -> std::vector<text::entry>
 	{
 		std::vector<text::entry> result{};
@@ -204,6 +187,25 @@ namespace mes
 		}
 		return result;
 	}
+	
+	#ifdef _DEBUG
+	static auto _log_text__(utils::string::buffer text, int opcode, uint32_t cdpg) -> void
+	{
+		/*xcout::helper.set_cp(cdpg);
+		xcout::helper.write("[0x%02X]%s\n", opcode, text.data());
+		xcout::helper.reset_attrs();*/
+		auto wstr{ text.wstring_buffer(cdpg) };
+		for (auto& achar : wstr)
+		{
+			if (static_cast<uint16_t>(achar) >= INT8_MAX)
+			{
+				xcout::helper.write(L"[0x%02X]%ls\n", opcode, wstr.data());
+				break;
+			}
+		}
+		//xcout::helper.write(L"[0x%02X]%ls\n", opcode, wstr.data());
+	}
+	#endif
 
 	auto script_helper::script_export(std::vector<text::entry>& texts, bool absolute_file_offset) const noexcept -> bool
 	{
@@ -224,11 +226,12 @@ namespace mes
 		const int32_t base{ absolute_file_offset ? asmbin.offset() : 0 };
 		for (const mes::token& token : tokens)
 		{
-			//if (info->string.is(token.opcode()))
-			//{
-			//	// if(token.opcode() != 0x45)
-			//	_log_text__({ token.string()->str }, int(token.opcode()), xcout::cdpg::sjis);
-			//}
+			#ifdef _DEBUG
+			if (info->string.is(token.opcode()))
+			{
+				_log_text__({ token.string()->str }, int(token.opcode()), xcout::cdpg::sjis);
+			}
+			#endif
 
 			if (info->encstr.is(token.opcode()))
 			{
