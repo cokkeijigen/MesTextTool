@@ -137,6 +137,14 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 |うたう絵本５|utaeho5|
 |うたう絵本６|utaeho6|
 
+| 游戏（旧版：ADVTXT） | 简称 |
+| :-----| :----: |
+|インファンタリア|infantaria|
+|Aries -アリエス-|aries|
+|うたう絵本４|utaeho4|
+|D.C.体験版|dc|
+|水夏ちょこっと体験版|suikademo|
+
 ## 0x3 如何编译（Windows）
 - **前提准备：**
 **安装 [Visual Studio Community](https://visualstudio.microsoft.com/zh-hans/vs/community/) 和**
