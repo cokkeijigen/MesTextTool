@@ -249,7 +249,7 @@ namespace mes
 		if (!is_existing)
 		{
 			script_info::script_infos.push_back(script_info{});
-			script_info& back = script_info::script_infos.back();
+			script_info& back{ script_info::script_infos.back() };
 			back.set(std::move(newinfo));
 		}
 
