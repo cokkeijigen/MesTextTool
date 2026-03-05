@@ -5,21 +5,26 @@
 namespace mes::advtxt
 {
 
-	const char* const advtxt_info::advtxt_supports[]
+	const char* advtxt_info::advtxt_supports[]
 	{
-		"utaeho4", "infantaria", "suikademo"
+		"infantaria"
 	};
 
 	std::vector<advtxt_info> advtxt_info::advtxt_infos
 	{
 		{ "advtxt"   , { 0x00       } },  // default
+		{ "aries"    , { 0x00, 0x0C } },
 		{ "utaeho4"  , { 0x00, 0x1A } },
-		{ "suikademo", { 0x00, 0x16 } }
+		{ "suikademo", { 0x00, 0x16 } },
 	};
 
-	auto advtxt_info::supports() -> const std::span<const char* const>
+	auto advtxt_info::supports() -> const std::span<const char*>
 	{
-		return std::span<const char* const>{ std::begin(advtxt_supports), std::end(advtxt_supports) };
+		return std::span<const char*>
+		{
+			std::begin(advtxt_info::advtxt_supports), 
+			std::  end(advtxt_info::advtxt_supports)
+		};
 	}
 
 	auto advtxt_info::infos() -> const std::vector<advtxt_info>&
@@ -181,17 +186,39 @@ namespace mes::advtxt
 			return;
 		}
 
-		const auto header{ reinterpret_cast<header_t*>(this->m_raw.data()) };
-		if (std::memcmp(header->magic, mes::advtxt::magic, sizeof(mes::advtxt::magic)) != 0)
+		if (std::memcmp(this->m_raw.data(), mes::advtxt::magic, sizeof(mes::advtxt::magic)) != 0)
 		{
 			return;
 		}
 
-		const size_t offset{ (header->entries.count * 2) + sizeof(mes::advtxt::magic) };
+		if (this->m_raw.size() < sizeof(mes::advtxt::magic) + sizeof(int32_t))
+		{
+			return;
+		}
+
+		const auto entry_count_or_end_token
+		{ 
+			*reinterpret_cast<int32_t*>(this->m_raw.data() + sizeof(mes::advtxt::magic)) 
+		};
+		const size_t offset
+		{
+			sizeof(mes::advtxt::magic) + 
+			(
+				(entry_count_or_end_token & 0xFFFF) != 0x0D0A ? 
+				(entry_count_or_end_token * 2) :
+				2
+			)
+		};
+
+		if (offset >= this->m_raw.size())
+		{
+			return;
+		}
+		
 		this->m_asmbin = view_t<uint8_t>
 		{
-			std::span<uint8_t> { raw.data() + offset, raw.size() - offset },
-			{ static_cast<int32_t>(offset) }
+			std::span<uint8_t>{ raw.data() + offset, raw.size() - offset },
+			static_cast<int32_t>(offset)
 		};
 
 		this->token_parse();
@@ -236,13 +263,11 @@ namespace mes::advtxt
 
 	auto is_advtxt(const std::span<const uint8_t> data) -> bool 
 	{
-		if (data.size() < sizeof(advtxt::header_t) || data.data() == nullptr)
+		if (data.size() < sizeof(mes::advtxt::magic) || data.data() == nullptr)
 		{
 			return false;
 		}
-
-		const auto header{ reinterpret_cast<const mes::advtxt::header_t*>(data.data()) };
-		const auto result{ std::memcmp(header->magic, mes::advtxt::magic, sizeof(mes::advtxt::magic)) };
+		const int result{ std::memcmp(data.data(), mes::advtxt::magic, sizeof(mes::advtxt::magic)) };
 		return result == 0;
 	}
 

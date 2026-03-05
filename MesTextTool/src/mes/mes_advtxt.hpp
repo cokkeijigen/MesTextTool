@@ -44,22 +44,10 @@ namespace mes::advtxt
 
 	};
 
-	#pragma pack(push, 1)
-	struct header_t
-	{
-		uint8_t magic[8]; // #ADV_TXT
-		struct
-		{
-			int32_t   count;
-			uint16_t data[];
-		} entries;
-	};
-	#pragma pack(pop)
-
 	class advtxt_info
 	{
 		static std::vector<advtxt_info> advtxt_infos;
-		static const char* const advtxt_supports[];
+		static const char* advtxt_supports[];
 
 		auto set(std::vector<uint8_t>&& encstrs) const noexcept -> void;
 
@@ -74,7 +62,7 @@ namespace mes::advtxt
 		static auto  make(std::string_view name, std::vector<uint8_t>&& encstrs) -> const advtxt_info*;
 
 		static auto infos() -> const std::vector<advtxt_info>&;
-		static auto supports() -> const std::span<const char* const>;
+		static auto supports() -> const std::span<const char*>;
 		static auto parse(std::string_view data) -> const advtxt_info*;
 	};
 	
@@ -141,7 +129,6 @@ namespace mes::advtxt
 		inline auto raw   () const noexcept -> const view_t<uint8_t>&;
 		inline auto asmbin() const noexcept -> const view_t<uint8_t>&;
 		inline auto tokens() const noexcept -> const std::vector<token>&;
-		inline auto header() const noexcept -> const header_t*;
 		inline auto info  () const noexcept -> const advtxt_info*;
 	protected:
 		const   advtxt_info*       m_info{};
@@ -169,11 +156,6 @@ namespace mes::advtxt
 	inline auto advtxt_view::tokens() const noexcept -> const std::vector<token>&
 	{
 		return this->m_tokens;
-	}
-
-	inline auto advtxt_view::header() const noexcept -> const header_t*
-	{
-		return reinterpret_cast<const header_t*>(this->m_raw.data());
 	}
 
 	inline auto advtxt_view::info() const noexcept -> const advtxt_info*
