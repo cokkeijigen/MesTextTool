@@ -15,6 +15,7 @@ namespace mes::advtxt
 		{ "advtxt"   , { 0x00       } },  // default
 		{ "aries"    , { 0x00, 0x0C } },
 		{ "utaeho4"  , { 0x00, 0x1A } },
+		{ "dc"       , { 0x00, 0x1B } },
 		{ "suikademo", { 0x00, 0x16 } },
 	};
 
@@ -200,7 +201,7 @@ namespace mes::advtxt
 		{ 
 			*reinterpret_cast<int32_t*>(this->m_raw.data() + sizeof(mes::advtxt::magic)) 
 		};
-		const size_t offset
+		const auto offset = size_t
 		{
 			sizeof(mes::advtxt::magic) + 
 			(
