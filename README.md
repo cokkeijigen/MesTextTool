@@ -142,7 +142,16 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 |D.C.体験版（ADVTXT）|dc|
 |水夏ちょこっと体験版（ADVTXT）|suikademo|
 
+上面那个列表上没有的，可通过命令行参数指定mes的info，数据结构参考：[advtxt_info](https://github.com/cokkeijigen/MesTextTool/blob/master/MesTextTool/src/mes/mes_advtxt.cpp#L16)、[script_info](https://github.com/cokkeijigen/MesTextTool/blob/master/MesTextTool/src/mes/script_info.cpp#L39) 。
+```
+-mes=dc3wy,offset2,0xA09F,0x00,0x38,0x39,0x41,0x42,0x5F,0x60,0x63,0x64,0xFF,0x20,0x55
+-advtxt=aries,0x00,0x0C
+```
+mes的opcode section获取参考 [Add Princess Party](https://github.com/cokkeijigen/MesTextTool/pull/5)，一般可以通过字符串`MESファイルを更新してください`快速定位。<br>
+advtxt是根据指定op过滤出文本，默认是0x00，部分游戏的对话人名是单独的op，旧版的结构很简单，用winhex查看一下子就能找到了。
+
 ## 0x3 如何编译（Windows）
+
 - **前提准备：**
 **安装 [Visual Studio Community](https://visualstudio.microsoft.com/zh-hans/vs/community/) 和**
 **[Cmake](https://cmake.org/download/)。**<br>
