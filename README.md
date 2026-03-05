@@ -98,6 +98,7 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 |A.G.II.D.C.　～あるぴじ学園2.0　サーカス史上最大の危機！？～|ag2dc|
 |ホームメイド スイーツ| hmsw |
 |ホームメイド -Home maid-| homemaid |
+|ホームメイド -Home maid- 体験版| homemaidt |
 |ユニ uni.| uni |
 |Princess Party ～プリンセスパーティー～| puripa |
 |Princess Party Camellia ～プリンセスパーティーカメリア～|ccamellia|
@@ -133,6 +134,8 @@ MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件
 |C.D. Christmas Days ～サーカスディスク クリスマスデイズ～|cdcd|
 |C.D.C.D.2 ～シーディーシーディー2～|cdcd2|
 |CircusLand Ⅰ|cland1|
+|うたう絵本５|utaeho5|
+|うたう絵本６|utaeho6|
 
 ## 0x3 如何编译（Windows）
 - **前提准备：**
