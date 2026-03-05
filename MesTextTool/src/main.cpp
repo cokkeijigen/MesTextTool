@@ -8,14 +8,13 @@ console::helper_t console::helper{ L"" PROJECT_NAME " v" PROJECT_VERSION };
 
 namespace mes_text_tool 
 {
-	xstr::buffer<wchar_t> logs{};
+	static xstr::buffer<wchar_t> logs{};
 	inline static constexpr std::wstring_view information
 	{
 		L"----------------------------------------------------\n"
 		L"- " PROJECT_NAME " v" PROJECT_VERSION " by iTsukezigen.\n"
 		L"- GitHub: https://github.com/cokkeijigen/MesTextTool\n"
 	};
-
 
 	static auto get_value_from_exename(const wchar_t* args, bool& log, mes::unioninfo& info, uint32_t& cdpg) -> void
 	{
@@ -196,7 +195,8 @@ namespace mes_text_tool
 				xcout::helper.writeline("[PROCESSING]...\n");
 			}
 
-			time = handler.process(
+			time = handler.process
+			(
 				[&](mes::scripts::handler::message_level level, std::wstring_view message) -> void
 				{
 					mes_text_tool::logs.write(message).write(L'\n');
