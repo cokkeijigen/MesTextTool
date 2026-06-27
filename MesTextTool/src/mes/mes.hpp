@@ -555,7 +555,10 @@ namespace mes
 			if (script_view != nullptr)
 			{
 				const auto info{ script_view->info() };
-				return info != nullptr ? info->name : "";
+				if (info != nullptr) 
+				{
+					return info->name;
+				}
 			}
 		}
 		else
