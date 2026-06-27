@@ -12,11 +12,11 @@ namespace mes::advtxt
 
 	std::vector<advtxt_info> advtxt_info::advtxt_infos
 	{
-		{ "advtxt"   , { 0x00       } },  // default
-		{ "aries"    , { 0x00, 0x0C } },
-		{ "utaeho4"  , { 0x00, 0x1A } },
-		{ "dc"       , { 0x00, 0x1B } },
-		{ "suikademo", { 0x00, 0x16 } },
+		{ "advtxt"   , { 0x00       } }, // default
+		{ "aries"    , { 0x00, 0x0C } }, // Aries -アリエス-
+		{ "utaeho4"  , { 0x00, 0x1A } }, // うたう絵本４
+		{ "dc"       , { 0x00, 0x1B } }, // D.C.体験版
+		{ "suikademo", { 0x00, 0x16 } }, // 水夏ちょこっと体験版
 	};
 
 	auto advtxt_info::supports() -> const std::span<const char*>
@@ -182,7 +182,7 @@ namespace mes::advtxt
 	advtxt_view::advtxt_view(const std::span<uint8_t> raw, const advtxt_info* info) noexcept
 		: m_raw{ raw, 0x00 }, m_info{ info }
 	{
-		if (raw.size() < sizeof(mes::advtxt::magic) || raw.data() == nullptr)
+		if (this->m_raw.size() < sizeof(mes::advtxt::magic) || this->m_raw.data() == nullptr)
 		{
 			return;
 		}
