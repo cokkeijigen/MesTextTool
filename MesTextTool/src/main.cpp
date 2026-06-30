@@ -55,7 +55,7 @@ namespace mes_text_tool
 		}
 	}
 
-	static auto get_value_from_argv(const int argc, wchar_t* const argv[], bool& log, mes::unioninfo& info, uint32_t& cdpg)
+	static auto get_value_from_argv(const int argc, const wchar_t* const argv[], bool& log, mes::unioninfo& info, uint32_t& cdpg)
 	{
 		for (size_t i = 1; i < argc - 1; i++)
 		{
@@ -154,7 +154,7 @@ namespace mes_text_tool
 		}
 	}
 
-	static auto main(const int argc, wchar_t* const argv[]) -> void
+	static auto main(const int argc, const wchar_t* const argv[]) -> void
 	{
 
 		double time{};
