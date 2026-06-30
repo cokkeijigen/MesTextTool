@@ -208,11 +208,11 @@ namespace mes::text
 		}
 
 		xstr::cvt::to_utf16(text, formater::buffer.raw(), input_code_page);
-		formater::buffer.recount(buffer.raw().size() - 1);
+		formater::buffer.recount(formater::buffer.raw().size() - 1);
 		
-		formater::do_format(buffer, this->m_config);
-		
-		text = buffer.string(
+		formater::do_format(formater::buffer, this->m_config);
+		text = formater::buffer.string
+		(
 			uint32_t
 			{
 				this->m_needs_transcoding ?
@@ -231,7 +231,7 @@ namespace mes::text
 
 		formater::buffer.recount(0);
 		formater::buffer.write(text);
-		formater::do_format(buffer, this->m_config);
+		formater::do_format(formater::buffer, this->m_config);
 		text = buffer.wstring();
 	}
 
