@@ -46,6 +46,8 @@ namespace mes::text
 		const mes::config& m_config;
 		mutable bool m_needs_transcoding;
 
+		static inline xstr::buffer<wchar_t> buffer{};
+
 		static auto is_disallowed_as_start(const wchar_t wchar) -> bool;
 		static auto is_disallowed_as_end  (const wchar_t wchar) -> bool;
 

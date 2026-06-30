@@ -25,18 +25,25 @@ namespace utils::xstr
 			{
 				if (out_type == unsafe::string_type)
 				{
-					_outbuf.wstring->assign(L"");
+					if (_outbuf.wstring->capacity() < _count + 1)
+					{
+						_outbuf.wstring->clear();
+					}
 					_outbuf.wstring->resize(_count);
 				}
 				else if (out_type == unsafe::vector_type)
 				{
+					if (_outbuf.vector->capacity() < _count + 1)
+					{
+						_outbuf.vector->clear();
+					}
 					_outbuf.vector->resize(_count + 1);
 				}
 				else
 				{
 					return false;
 				}
-				auto outbuf{ out_type == 1 ? _outbuf.wstring->data() : _outbuf.vector->data() };
+				wchar_t* const outbuf{ out_type == 1 ? _outbuf.wstring->data() : _outbuf.vector->data() };
 				::MultiByteToWideChar(cdpg, 0, buffer.data(), buffer.size(), outbuf, _count);
 				outbuf[static_cast<size_t>(_count)] = L'\0';
 			}
@@ -57,18 +64,25 @@ namespace utils::xstr
 			{
 				if (out_type == unsafe::string_type)
 				{
-					_outbuf.string->assign("");
+					if (_outbuf.string->capacity() < _count + 1)
+					{
+						_outbuf.string->clear();
+					}
 					_outbuf.string->resize(_count);
 				}
 				else if (out_type == unsafe::vector_type)
 				{
+					if (_outbuf.vector->capacity() < _count + 1) 
+					{
+						_outbuf.vector->clear();
+					}
 					_outbuf.vector->resize(_count + 1);
 				}
 				else
 				{
 					return false;
 				}
-				auto outbuf{ out_type == 1 ? _outbuf.string->data() : _outbuf.vector->data() };
+				char* const outbuf{ out_type == 1 ? _outbuf.string->data() : _outbuf.vector->data() };
 				::WideCharToMultiByte(cdpg, 0, buffer.data(), buffer.size(), outbuf, _count, NULL, NULL);
 				outbuf[static_cast<size_t>(_count)] = '\0';
 			}
@@ -131,6 +145,12 @@ namespace utils::xstr
 		unsafe::convert_encoding(buffer, unsafe::string_type, &output, unsafe::string_type, current_code_page, target_code_page);
 	}
 
+	auto encoding_convert(std::string_view input, std::vector<char>& output, uint32_t current_code_page, uint32_t target_code_page) -> void 
+	{
+		auto buffer{ const_cast<char*>(input.data()) };
+		unsafe::convert_encoding(buffer, unsafe::string_type, &output, unsafe::vector_type, current_code_page, target_code_page);
+	}
+
 	auto encoding_convert(std::string_view input, uint32_t current_code_page, uint32_t target_code_page) -> std::string
 	{
 		std::string result{};
@@ -141,6 +161,11 @@ namespace utils::xstr
 	auto encoding_convert(std::wstring_view input, std::string& output, uint32_t target_code_page) -> void
 	{
 		unsafe::convert_to_string(input, &output, unsafe::string_type, target_code_page);
+	}
+
+	auto encoding_convert(std::wstring_view input, std::vector<char>& output, uint32_t target_code_page) -> void
+	{
+		unsafe::convert_to_string(input, &output, unsafe::vector_type, target_code_page);
 	}
 
 	auto encoding_convert(std::wstring_view input, uint32_t target_code_page) -> std::string
@@ -155,6 +180,11 @@ namespace utils::xstr
 		unsafe::convert_to_utf16(input, &output, unsafe::string_type, current_code_page);
 	}
 
+	auto convert_to_utf16(std::string_view input, std::vector<wchar_t>& output, uint32_t current_code_page) -> void 
+	{
+		unsafe::convert_to_utf16(input, &output, unsafe::vector_type, current_code_page);
+	}
+
 	auto convert_to_utf16(std::string_view input, uint32_t current_code_page) -> std::wstring
 	{
 		std::wstring result{};
@@ -165,6 +195,11 @@ namespace utils::xstr
 	auto convert_to_utf8(std::wstring_view input, std::string& output) -> void 
 	{
 		unsafe::convert_to_string(input, &output, unsafe::string_type, CP_UTF8);
+	}
+
+	auto convert_to_utf8(std::wstring_view input, std::vector<char>& output) -> void 
+	{
+		unsafe::convert_to_string(input, &output, unsafe::vector_type, CP_UTF8);
 	}
 
 	auto convert_to_utf8(std::wstring_view input) -> std::string 

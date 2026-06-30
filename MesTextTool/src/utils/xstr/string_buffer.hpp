@@ -80,14 +80,13 @@ namespace utils::xstr
 
 		inline auto wstring() const noexcept -> std::wstring
 		{
-			return std::wstring{ this->substr(0) };
+			return std::wstring{ this->view() };
 		}
 
 		inline auto u16string()  const noexcept -> std::u16string 
 		{
-			const auto temp{ this->substr(0) };
-			const auto data{ reinterpret_cast<const char16_t*>(temp.data()) };
-			return std::u16string{ data, temp.size() };
+			const auto temp{ this->view() };
+			return std::u16string{ *reinterpret_cast<const std::u16string_view*>(&temp) };
 		}
 
 		inline auto u8string() const noexcept -> std::u8string 

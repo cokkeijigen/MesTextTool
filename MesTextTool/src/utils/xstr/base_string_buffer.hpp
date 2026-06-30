@@ -107,6 +107,8 @@ namespace utils::xstr
 
 		auto data() const noexcept -> elem_t*;
 
+		auto  raw() noexcept -> vector_t&;
+
 		auto view() const noexcept -> view_t;
 
 		auto count() const noexcept -> size_t;
@@ -178,7 +180,10 @@ namespace utils::xstr
 	template<class elem_t>
 	inline base_string_buffer<elem_t>::base_string_buffer(size_t size)
 	{
-		this->m_Buffer.resize(size);
+		if (size != 0) 
+		{
+			this->m_Buffer.resize(size);
+		}
 	}
 
 	template<class elem_t>
@@ -190,12 +195,13 @@ namespace utils::xstr
 	template<class elem_t>
 	inline auto base_string_buffer<elem_t>::check(const size_t length) -> void
 	{
-		size_t count { this->m_CharCount + length + 1 };
-		if (count > this->m_Buffer.size())
+		const size_t count { this->m_CharCount + length + 1 };
+		if (count > this->m_Buffer.capacity()) 
 		{
-			size_t size{ (count + 1023) & ~1023 };
-			this->m_Buffer.resize(size);
+			const size_t size{ (count + 1023) & ~1023 };
+			this->m_Buffer.reserve(size);
 		}
+		this->m_Buffer.resize(this->m_Buffer.capacity());
 	}
 
 	template<class elem_t>
@@ -292,6 +298,12 @@ namespace utils::xstr
 	inline auto base_string_buffer<elem_t>::data() const noexcept -> elem_t*
 	{
 		return this->m_Buffer.data();
+	}
+
+	template<class elem_t>
+	inline auto base_string_buffer<elem_t>::raw() noexcept -> vector_t&
+	{
+		return this->m_Buffer;
 	}
 
 	template<class elem_t>

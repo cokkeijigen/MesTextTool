@@ -3,16 +3,19 @@
 
 namespace utils::xstr
 {
-	
+	auto encoding_convert(std::string_view input, std::vector<char>& output, uint32_t current_code_page, uint32_t target_code_page) -> void;
 	auto encoding_convert(std::string_view intput, std::string& output, uint32_t current_code_page, uint32_t target_code_page) -> void;
 	auto encoding_convert(std::string_view intput, uint32_t current_code_page, uint32_t target_code_page) -> std::string;
 
+	auto encoding_convert(std::wstring_view input, std::vector<char>& output, uint32_t target_code_page) -> void;
 	auto encoding_convert(std::wstring_view input, std::string& output, uint32_t target_code_page) -> void;
 	auto encoding_convert(std::wstring_view input, uint32_t target_code_page) -> std::string;
 
+	auto convert_to_utf16(std::string_view input, std::vector<wchar_t>& output, uint32_t current_code_page) -> void;
 	auto convert_to_utf16(std::string_view intput, std::wstring& output, uint32_t current_code_page = 0) -> void;
 	auto convert_to_utf16(std::string_view intput, uint32_t current_code_page = 0) -> std::wstring;
 
+	auto convert_to_utf8(std::wstring_view input, std::vector<char>& output) -> void;
 	auto convert_to_utf8(std::wstring_view input, std::string& output) -> void;
 	auto convert_to_utf8(std::wstring_view input) -> std::string;
 
@@ -29,6 +32,11 @@ namespace utils::xstr
 		{
 			return xstr::encoding_convert(intput, output, current_code_page, target_code_page);
 		}
+
+		inline auto convert(std::string_view intput, std::vector<char>& output, uint32_t current_code_page, uint32_t target_code_page) -> void 
+		{
+			return xstr::encoding_convert(intput, output, current_code_page, target_code_page);
+		}
 		
 		inline auto convert(std::string_view intput, uint32_t current_code_page, uint32_t target_code_page) -> std::string
 		{
@@ -36,6 +44,11 @@ namespace utils::xstr
 		}
 
 		inline auto convert(std::wstring_view input, std::string& output, uint32_t target_code_page) -> void 
+		{
+			return xstr::encoding_convert(input, output, target_code_page);
+		}
+
+		inline auto convert(std::wstring_view input, std::vector<char>& output, uint32_t target_code_page) -> void 
 		{
 			return xstr::encoding_convert(input, output, target_code_page);
 		}
@@ -50,6 +63,11 @@ namespace utils::xstr
 			xstr::encoding_convert(*reinterpret_cast<std::string_view*>(&intput), output, 65001, target_code_page);
 		}
 
+		inline auto convert(std::u8string_view intput, std::vector<char>& output, uint32_t target_code_page) -> void
+		{
+			xstr::encoding_convert(*reinterpret_cast<std::string_view*>(&intput), output, 65001, target_code_page);
+		}
+
 		inline auto convert(std::u8string_view intput, uint32_t target_code_page) -> std::string
 		{
 			return xstr::encoding_convert(*reinterpret_cast<std::string_view*>(&intput), 65001, target_code_page);
@@ -58,6 +76,11 @@ namespace utils::xstr
 		inline auto to_utf16(std::string_view intput, wstring_t auto& output, uint32_t current_code_page = 0) -> void
 		{
 			xstr::convert_to_utf16(intput, *reinterpret_cast<std::wstring*>(&output), current_code_page);
+		}
+
+		inline auto to_utf16(std::string_view intput, std::vector<wchar_t>& output, uint32_t current_code_page = 0) -> void
+		{
+			xstr::convert_to_utf16(intput, output, current_code_page);
 		}
 
 		template<class R = std::wstring>
@@ -80,6 +103,25 @@ namespace utils::xstr
 		inline auto to_utf8(std::wstring_view input, string_t auto& output) -> void
 		{
 			return xstr::convert_to_utf8(input, *reinterpret_cast<std::string*>(&output));
+		}
+
+		inline auto to_utf8(std::u16string_view input, string_t auto& output) -> void
+		{
+			return xstr::convert_to_utf8(*reinterpret_cast<std::wstring_view*>(&input), *reinterpret_cast<std::string*>(&output));
+		}
+
+		template<class T = char>
+		requires (std::is_same_v<T, char> || std::is_same_v<T, char8_t>)
+		inline auto to_utf8(std::wstring_view input, std::vector<char>& output) -> void
+		{
+			return xstr::convert_to_utf8(input, output);
+		}
+
+		template<class T = char>
+		requires (std::is_same_v<T, char> || std::is_same_v<T, char8_t>)
+		inline auto to_utf8(std::u16string_view input, std::vector<char>& output) -> void
+		{
+			return xstr::convert_to_utf8(*reinterpret_cast<std::wstring_view*>(&input), output);
 		}
 
 		template<class R = std::string>

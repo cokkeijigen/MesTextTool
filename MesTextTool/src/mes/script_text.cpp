@@ -79,8 +79,8 @@ namespace mes::text
 		{
 			buffer.remove(L"\\n　").remove(L"\\n");
 
-			const auto text_view  { buffer.view()    };
-			const auto text_length{ text_view.size() };
+			const std::wstring_view text_view{    buffer.view() };
+			const size_t          text_length{ text_view.size() };
 
 			if (text_length <= static_cast<size_t>(config.text_min_length))
 			{
@@ -207,16 +207,18 @@ namespace mes::text
 			return;
 		}
 
-		xstr::buffer<wchar_t> buffer{ xstr::cvt::to_utf16(text, input_code_page) };
+		xstr::cvt::to_utf16(text, formater::buffer.raw(), input_code_page);
+		formater::buffer.recount(buffer.raw().size() - 1);
 		
 		formater::do_format(buffer, this->m_config);
 		
-		text = std::move(buffer.string(uint32_t
+		text = buffer.string(
+			uint32_t
 			{
 				this->m_needs_transcoding ?
 				this->m_config.use_code_page :
 				input_code_page
-			})
+			}
 		);
 	}
 
@@ -226,9 +228,11 @@ namespace mes::text
 		{
 			return;
 		}
-		xstr::buffer<wchar_t> buffer{ text };
+
+		formater::buffer.recount(0);
+		formater::buffer.write(text);
 		formater::do_format(buffer, this->m_config);
-		text = std::wstring{ buffer.view() };
+		text = buffer.wstring();
 	}
 
 	auto parse_format(const xfsys::file& file, std::vector<entry>& output, const text::formater& formater, bool entry_wstring) -> void
@@ -272,12 +276,17 @@ namespace mes::text
 				continue;
 			}
 
-			if (line.find(u8"//") != std::u8string_view::npos)
+			if (!line.starts_with(u8"★◎")) 
 			{
 				continue;
 			}
 
-			const size_t pos{ line.find(u8"◎★") };
+			if (line.find(u8"//", 6) != std::u8string_view::npos)
+			{
+				continue;
+			}
+
+			const size_t pos{ line.find(u8"◎★", 6) };
 			if (pos == std::u8string_view::npos)
 			{
 				continue;

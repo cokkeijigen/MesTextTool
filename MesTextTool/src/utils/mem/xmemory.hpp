@@ -37,7 +37,7 @@ namespace utils::xmem {
 		static constexpr inline auto unused{ static_cast<size_t>(-1) };
 		using iterator = typename std::vector<elem_t>::iterator;
 
-		buffer() = default;
+		 buffer() = default;
 		~buffer() = default;
 		
 		buffer(size_t size);
@@ -542,8 +542,9 @@ namespace utils::xmem {
 		}
 
 		this->m_Buffer = std::move(other.m_Buffer);
-		this->m_Count = other.m_Count;
+		this->m_Count  = other.m_Count;
 
+		other.m_Buffer.clear();
 		other.m_Count = 0;
 
 		return *this;
