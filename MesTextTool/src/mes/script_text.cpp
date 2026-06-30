@@ -128,7 +128,7 @@ namespace mes::text
 							line_char_count = target_count;
 						}
 
-						new_buffer.write(text_view.substr(index, end));
+						new_buffer.write(text_view.substr(index, end + 1));
 
 						index += end + 1;
 						continue;
