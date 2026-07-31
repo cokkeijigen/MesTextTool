@@ -72,7 +72,7 @@ By default, the program automatically detects the mes version, **but it may not 
 将exe重命名加上`-版本简称`，例如：<br>
 Rename the executable by adding `-version_alias`, for example:<br>
 ```
-#  以GBK编码打开DC4版本的Mes文件 / Open DC4 version Mes files with GBK encoding
+# 以GBK编码打开DC4版本的Mes文件 / Open DC4 version Mes files with GBK encoding
 MesTextTool-cp936-dc4.exe
 ```
 | 游戏 / Game | 简称 / Alias |
