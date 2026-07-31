@@ -161,6 +161,7 @@ For games not listed above, you can specify mes info via command line arguments.
 ```
 mes的opcode section获取参考 [Add Princess Party](https://github.com/cokkeijigen/MesTextTool/pull/5)，一般可以通过字符串`MESファイルを更新してください`快速定位。<br>
 For obtaining mes opcode sections, refer to [Add Princess Party](https://github.com/cokkeijigen/MesTextTool/pull/5). Usually, it can be quickly located using the string `MESファイルを更新してください`.<br>
+
 advtxt是根据指定op过滤出文本，默认是0x00，部分游戏的对话人名是单独的op，旧版的结构很简单，用winhex查看一下子就能找到了。<br>
 advtxt filters text based on specified opcodes (default is 0x00). In some games, character names use separate opcodes. The structure of older versions is simple and can be easily found using WinHex.
 
