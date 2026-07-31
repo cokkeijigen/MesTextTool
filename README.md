@@ -66,8 +66,9 @@ To specify a different encoding, rename the executable to include `-cp[xxxx]`, f
 ```
 MesTextTool-cp936.exe ; cp936 -> GBK编码 / GBK encoding
 ```
-程序默认是自动选择mes版本，**但不一定全都适用**，这时候就需要手动指定游戏版本了（<br>
-By default, the program automatically detects the mes version, but it may not always work. In such cases, you need to manually specify the game version (<br>
+程序默认是自动选择mes版本，**但不一定全都适用**，这时候就需要手动指定游戏版本了<br>
+By default, the program automatically detects the mes version, **but it may not always work**. In such cases, you need to manually specify the game version<br>
+
 将exe重命名加上`-版本简称`，例如：<br>
 Rename the executable by adding -version_alias, for example:<br>
 ```
