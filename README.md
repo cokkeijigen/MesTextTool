@@ -70,7 +70,7 @@ MesTextTool-cp936.exe ; cp936 -> GBK编码 / GBK encoding
 By default, the program automatically detects the mes version, **but it may not always work**. In such cases, you need to manually specify the game version<br>
 
 将exe重命名加上`-版本简称`，例如：<br>
-Rename the executable by adding -version_alias, for example:<br>
+Rename the executable by adding `-version_alias`, for example:<br>
 ```
 MesTextTool-cp936-dc4.exe ; 以GBK编码打开DC4版本的Mes文件 / Open DC4 version Mes files with GBK encoding
 ```
