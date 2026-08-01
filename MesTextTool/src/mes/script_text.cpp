@@ -193,6 +193,10 @@ namespace mes::text
 
 			buffer = std::move(new_buffer);
 		}
+		else 
+		{
+			buffer.replace(L"\\n", L"\n");
+		}
 
 		for (const auto& [key, value] : config.after_replaces)
 		{
