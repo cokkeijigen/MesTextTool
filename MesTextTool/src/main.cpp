@@ -12,7 +12,7 @@ namespace mes_text_tool
 	inline static constexpr std::wstring_view information
 	{
 		L"----------------------------------------------------\n"
-		L"- " PROJECT_NAME " v" PROJECT_VERSION " by iTsukezigen.\n"
+		L"- " PROJECT_NAME " v" PROJECT_VERSION "(" PROJECT_BUILD_DATE ")" " by iTsukezigen.\n"
 		L"- GitHub: https://github.com/cokkeijigen/MesTextTool\n"
 	};
 
