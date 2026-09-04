@@ -60,7 +60,7 @@ namespace mes::text
 		buffer.replace(L"{", L"｛");
 		buffer.replace(L"}", L"｝");
 
-		bool need_enable_format{ false };
+		bool enable_format{ false };
 		if (buffer.starts_with(L"@::"))
 		{
 			buffer.remove(L"@::", 0, 1);
@@ -68,14 +68,14 @@ namespace mes::text
 		}
 		else
 		{
-			need_enable_format = bool
+			enable_format = bool
 			{
 				(config.text_max_length != -1 || config.text_min_length != -1) &&
 				config.text_max_length >= config.text_min_length
 			};
 		}
 
-		if (need_enable_format)
+		if (enable_format)
 		{
 			buffer.remove(L"\\n　").remove(L"\\n");
 
