@@ -280,7 +280,7 @@ namespace xstr
 	}
 
 	template<class char_type>
-	inline auto trim(std::basic_string<char_type>&& string) -> std::basic_string_view<char_type>
+	inline auto trim(std::basic_string<char_type>&& string) -> std::basic_string<char_type>
 	{
 		string.assign(xstr::view<char_type>(string).trim());
 		return std::move(string);
