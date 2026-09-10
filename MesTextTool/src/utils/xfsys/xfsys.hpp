@@ -115,12 +115,14 @@ namespace xfsys
 
 	inline file::file(file&& other) noexcept
 	{
+		this->close();
 		this->m_handle = other.m_handle;
 		other.m_handle = nullptr;
 	}
 
 	inline auto file::operator=(file&& other) noexcept -> file&
 	{
+		this->close();
 		this->m_handle = other.m_handle;
 		other.m_handle = nullptr;
 		return *this;
